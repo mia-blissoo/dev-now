@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEV NOW PRD v2</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", sans-serif;
+    line-height: 1.6; color: #1a1a1a;
+    max-width: 1100px; margin: 0 auto; padding: 40px 32px;
+    background: #fafafa;
+  }
+  h2 { font-size: 22px; margin-top: 40px; color: #1a1a1a; border-left: 4px solid #1a1a1a; padding-left: 12px; }
+  h3 { font-size: 17px; margin-top: 28px; color: #333; }
+  h4 { font-size: 14px; margin-top: 18px; color: #555; }
+  .summary {
+    background: #fff; border-left: 4px solid #1a1a1a;
+    padding: 14px 18px; margin: 0 0 20px;
+    font-size: 15px; color: #1a1a1a;
+  }
+  .summary b { display: block; margin-bottom: 4px; font-size: 13px; color: #666; text-transform: uppercase; letter-spacing: 0.03em; }
+  .meta {
+    display: flex; flex-wrap: wrap; gap: 16px; padding: 12px 16px;
+    background: #f0f0f0; border-radius: 8px; margin: 0 0 28px;
+    font-size: 13px;
+  }
+  .meta span { white-space: nowrap; }
+  .meta strong { color: #666; margin-right: 6px; }
+  table {
+    border-collapse: collapse; width: 100%; margin: 12px 0;
+    background: white; font-size: 13px;
+  }
+  th, td { border: 1px solid #e0e0e0; padding: 10px 12px; text-align: left; vertical-align: top; }
+  th { background: #f5f5f5; font-weight: 600; }
+  .v1-in { background: #e8f5e9; color: #2e7d32; font-weight: 600; }
+  .v1-out { background: #ffebee; color: #999; }
+  .v2 { background: #e3f2fd; color: #1565c0; font-weight: 600; }
+  .v1-done { background: #f5f5f5; color: #666; font-weight: 600; }
+  .flow {
+    display: flex; gap: 10px; overflow-x: auto; padding: 14px;
+    border: 1px solid #e0e0e0; border-radius: 8px; background: white;
+    margin: 12px 0;
+  }
+  .flow-step {
+    flex-shrink: 0; min-width: 180px; padding: 12px 14px;
+    background: #f9f9f9; border-radius: 6px; font-size: 13px;
+    border-left: 3px solid #1a1a1a;
+  }
+  .flow-step .num { font-weight: 600; color: #888; font-size: 11px; }
+  .flow-step .title { font-weight: 600; margin: 4px 0 6px; font-size: 14px; }
+  .flow-step .desc { color: #666; font-size: 12px; line-height: 1.4; }
+  .flow-step.gate { border-left-color: #ff9800; }
+  .flow-step.success { border-left-color: #2e7d32; }
+  .decision {
+    background: white; padding: 14px 16px; border-left: 4px solid #ff9800;
+    margin: 12px 0; border-radius: 4px;
+  }
+  .decision b { color: #1a1a1a; }
+  .decision .options { margin: 8px 0 4px 18px; padding: 0; font-size: 13px; }
+  .decision .options li { margin: 4px 0; }
+  .decision .recommend {
+    background: #fff3e0; padding: 7px 11px; border-radius: 4px;
+    margin-top: 8px; font-size: 13px; font-weight: 500;
+  }
+  .decision .recommend b::before { content: "제안: "; }
+  .decision .decided-row { margin-top: 6px; font-size: 12px; }
+  .terms {
+    font-size: 13px; color: #666; margin-top: 60px;
+    padding: 20px; border-top: 2px dashed #ccc; background: #fafafa;
+  }
+  .terms h3 { margin-top: 0; color: #888; }
+  .terms dt { font-weight: 600; margin-top: 12px; color: #444; }
+  .terms dd { margin: 4px 0 0 16px; }
+  code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+  blockquote {
+    border-left: 4px solid #888; padding: 8px 16px;
+    margin: 12px 0; color: #555; background: #fff; font-size: 13px;
+  }
+  .label { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; vertical-align: middle; }
+  .label-proposal { background: #fff3e0; color: #e65100; }
+  .label-todo { background: #ffebee; color: #c62828; }
+  .label-done { background: #e8f5e9; color: #2e7d32; }
+  .label-v1 { background: #e8f5e9; color: #2e7d32; }
+  .label-v2 { background: #e3f2fd; color: #1565c0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 12px 0; }
+  .card-box { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px 16px; }
+  .card-box h4 { margin: 0 0 8px; color: #1a1a1a; font-size: 14px; }
+  .card-box ul { margin: 0; padding-left: 20px; font-size: 13px; color: #555; }
+  .card-box ul li { margin: 4px 0; }
+  ul.checklist { list-style: none; padding-left: 0; font-size: 13px; }
+  ul.checklist li { padding: 4px 0; color: #555; }
+  ul.checklist li::before { content: "□ "; color: #888; margin-right: 4px; }
+  ul.checklist li.done::before { content: "■ "; color: #2e7d32; }
+  .role-table th:first-child { width: 110px; }
+  .role-table td.yes { background: #e8f5e9; color: #2e7d32; font-weight: 600; text-align: center; }
+  .role-table td.no { background: #ffebee; color: #c62828; text-align: center; }
+  .role-table td.partial { background: #fff3e0; color: #e65100; text-align: center; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="summary">
+  <b>한 줄 요약</b>
+  개발팀 진행상황·POC·엔터 뉴스 모니터링을 한 화면에서 보는 내부용 대시보드.
+  V2에서 Google OAuth 기반 권한 모델과 슬랙 List 자동 연동으로 확장.
+</div>
+
+<div class="meta">
+  <span><strong>호스트</strong>독립 웹 (Vercel 배포)</span>
+  <span><strong>타겟</strong>BLISSOO 사내 (개발팀 + C레벨 + 타팀 일부)</span>
+  <span><strong>디바이스</strong>웹 (모바일 퍼스트, max-width 540px)</span>
+  <span><strong>버전</strong>v2</span>
+</div>
+
+<h2>1. V2 스코프</h2>
+
+<div class="grid-2">
+  <div class="card-box">
+    <h4>V2에 포함</h4>
+    <ul>
+      <li>Google OAuth 로그인 + 가입 승인 워크플로우</li>
+      <li>권한 모델 (뷰어 · 편집자 · 관리자)</li>
+      <li>비로그인 confidential 랜딩 (강한 블러)</li>
+      <li>카드 클릭 → 모달 큰 상세 창 (바텀시트 대체)</li>
+      <li>POC 탭 상단 서브헤더 (Proof of Concept 설명)</li>
+      <li>슬랙 List 자동 연동 — 텍스트 콘텐츠 갱신 <span class="label label-done">김종원 완료</span></li>
+      <li>"부회장님 확인 필요" 별표 (연보라) — 편집권한자만 토글</li>
+    </ul>
+  </div>
+  <div class="card-box">
+    <h4>V2에서 빠짐 (V3 검토)</h4>
+    <ul>
+      <li>슬랙 List ↔ DEV NOW 양방향 동기화 (V2는 단방향)</li>
+      <li>실시간 협업 (동시 편집·커서 공유)</li>
+      <li>가입 승인 시 자동 알림 (이메일·슬랙 DM)</li>
+      <li>접근 로그 / 편집 히스토리</li>
+      <li>모바일 푸시 알림</li>
+    </ul>
+  </div>
+</div>
+
+<h2>2. 사용자 플로우</h2>
+
+<h3>2-1. 비로그인 → 승인 완료까지</h3>
+<div class="flow">
+  <div class="flow-step">
+    <div class="num">01</div>
+    <div class="title">랜딩 진입</div>
+    <div class="desc">DEV NOW 페이지 기본 뷰 노출. 상단에 "Confidential — 사내 전용" 서브헤더. 간트 막대는 흐릿하게 표시, 상세 클릭 시도 시 로그인 모달.</div>
+  </div>
+  <div class="flow-step gate">
+    <div class="num">02</div>
+    <div class="title">Google로 로그인</div>
+    <div class="desc">CTA 버튼 → Google OAuth 팝업. blissoolimited.com 도메인 추천(필수 아님).</div>
+  </div>
+  <div class="flow-step gate">
+    <div class="num">03</div>
+    <div class="title">승인 대기 화면</div>
+    <div class="desc">"관리자 승인 대기 중" 안내. 로그아웃 옵션. 승인자에게 슬랙 DM 자동 전송(옵션).</div>
+  </div>
+  <div class="flow-step gate">
+    <div class="num">04</div>
+    <div class="title">관리자 승인</div>
+    <div class="desc">개발팀 관리자가 어드민 페이지에서 가입 요청 목록 확인 → 뷰어/편집자 권한 부여 또는 거절.</div>
+  </div>
+  <div class="flow-step success">
+    <div class="num">05</div>
+    <div class="title">전체 조회 가능</div>
+    <div class="desc">모든 카드 클릭 → 모달 상세. 내부 링크·외부 URL 클릭 이동. 권한이 편집자면 EDIT 버튼 노출.</div>
+  </div>
+</div>
+
+<h3>2-2. 편집자 데이터 갱신 (간트 vs 텍스트)</h3>
+<div class="flow">
+  <div class="flow-step">
+    <div class="num">A1</div>
+    <div class="title">간트차트 (수동)</div>
+    <div class="desc">편집자가 DEV NOW 페이지 EDIT 모드 진입 → 드래그/resize/상태 변경 → 즉시 저장.</div>
+  </div>
+  <div class="flow-step">
+    <div class="num">B1</div>
+    <div class="title">텍스트 콘텐츠 (자동)</div>
+    <div class="desc">개발팀이 슬랙 List(JISOO APP Plan)에 진행상황 작성 → dev-now bot이 변경 감지 → DEV NOW에 자동 반영.</div>
+  </div>
+  <div class="flow-step success">
+    <div class="num">B2</div>
+    <div class="title">갱신 트리거</div>
+    <div class="desc">슬랙 List 수정 시 webhook 또는 폴링으로 동기화. (미정: 주기 vs 실시간 — 5번 항목 참조)</div>
+  </div>
+</div>
+
+<h2>3. 화면·기능 명세</h2>
+
+<h3>3-1. 비로그인 랜딩 (Confidential View)</h3>
+<ul>
+  <li>상단 헤더에 "Confidential — BLISSOO 내부 전용" 서브헤더 노출</li>
+  <li>DEV NOW 탭의 간트차트만 흐릿하게(opacity 0.5) 미리보기로 표시</li>
+  <li>POC / Daily Enter 탭 접근 시 로그인 모달</li>
+  <li>모든 카드·간트 막대 클릭 시 → "Google로 로그인" 모달</li>
+  <li>우측 상단 "Google로 로그인" CTA 버튼 상시 노출</li>
+</ul>
+
+<h3>3-2. POC 탭 서브헤더</h3>
+<blockquote>
+  <b>Proof of Concept</b><br/>
+  개발팀이 본 제품에 들어가기 전 빠르게 검증한 실험 결과물. 정식 출시되지 않은 프로토타입·MVP 등이 모여있어요.
+</blockquote>
+
+<h3>3-3. 카드 모달 상세</h3>
+<ul>
+  <li>카드 클릭 시 화면 중앙에 모달 (V1의 하단 바텀시트 → V2 모달로 변경)</li>
+  <li>모달 사이즈: 데스크탑 720px / 모바일 풀스크린</li>
+  <li>구성: 제목, 상태 칩, 담당자, 메모, 데드라인, 첨부 이미지(여러 장 캐러셀), 외부 링크 버튼</li>
+  <li>외부 링크가 있으면 "원문 보기" 또는 "바로가기" 버튼 — 새 탭으로 열림</li>
+  <li>편집자만 우상단에 "편집" 버튼 노출 → 클릭 시 편집 폼으로 전환</li>
+  <li>뷰어는 읽기 전용</li>
+</ul>
+
+<h3>3-4. "부회장님 확인 필요" 별표</h3>
+<ul>
+  <li>카드별로 <b>연보라색 별표 아이콘</b>(★) 토글 가능 — 카드 우상단 또는 제목 옆에 표시</li>
+  <li>의미: "부회장님 의사결정 필요 / 컨펌 받아야 하는 항목"</li>
+  <li>색: <code>#C4B5FD</code> 또는 <code>#A78BFA</code> 계열 (JISOO APP 보라와 어울리는 톤)</li>
+  <li>토글 권한: <b>편집자 + 관리자만</b> 추가/제거 가능. 뷰어는 별표 시각만 보임</li>
+  <li>위치: 메인 간트 행 좌측 라벨 옆, 모달 상세 제목 옆 둘 다 표시</li>
+  <li>필터: 우상단에 "별표만 보기" 토글 (모든 권한 가능)</li>
+  <li>슬랙 List에는 없는 DEV NOW 자체 메타 → 슬랙 sync 시 보존</li>
+</ul>
+
+<h3>3-5. 어드민 — 가입 승인 화면</h3>
+<ul>
+  <li>관리자만 접근 가능. URL: <code>/admin</code> 또는 우상단 메뉴</li>
+  <li>가입 요청 목록 (이메일, 이름, 요청 시각, 도메인)</li>
+  <li>각 요청에 [뷰어 승인] [편집자 승인] [거절] 버튼</li>
+  <li>승인됨 / 거절됨 / 대기중 필터</li>
+  <li>승인 시 신청자 이메일로 자동 안내 (옵션)</li>
+</ul>
+
+<h2>4. 권한 모델</h2>
+
+<table class="role-table">
+<thead>
+<tr><th>역할</th><th>대상</th><th>조회</th><th>모달 상세</th><th>간트 편집</th><th>별표 토글</th><th>가입 승인</th></tr>
+</thead>
+<tbody>
+<tr>
+  <td><b>비로그인</b></td>
+  <td>외부인</td>
+  <td class="partial">랜딩 강한 블러</td>
+  <td class="no">불가</td>
+  <td class="no">불가</td>
+  <td class="no">불가</td>
+  <td class="no">불가</td>
+</tr>
+<tr>
+  <td><b>승인 대기</b></td>
+  <td>로그인 직후</td>
+  <td class="no">불가</td>
+  <td class="no">불가</td>
+  <td class="no">불가</td>
+  <td class="no">불가</td>
+  <td class="no">불가</td>
+</tr>
+<tr>
+  <td><b>뷰어</b></td>
+  <td>부회장, 선호 부장 등 개발팀 외</td>
+  <td class="yes">가능</td>
+  <td class="yes">읽기</td>
+  <td class="no">불가</td>
+  <td class="partial">시각만 보임</td>
+  <td class="no">불가</td>
+</tr>
+<tr>
+  <td><b>편집자</b></td>
+  <td>BLISSOO 개발팀</td>
+  <td class="yes">가능</td>
+  <td class="yes">읽기 + 편집</td>
+  <td class="yes">가능</td>
+  <td class="yes">가능</td>
+  <td class="no">불가</td>
+</tr>
+<tr>
+  <td><b>관리자</b></td>
+  <td>개발팀 1~2명 (미아·박영주 등)</td>
+  <td class="yes">가능</td>
+  <td class="yes">읽기 + 편집</td>
+  <td class="yes">가능</td>
+  <td class="yes">가능</td>
+  <td class="yes">가능</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  기본값: 신규 가입자는 모두 <b>승인 대기</b> 상태로 시작. 관리자가 명시적으로 뷰어/편집자로 승격해야 조회 가능.
+</blockquote>
+
+<h2>5. 데이터 소스</h2>
+
+<div class="grid-2">
+  <div class="card-box">
+    <h4>간트차트 (수동 편집)</h4>
+    <ul>
+      <li>편집자가 EDIT 모드에서 직접 조작</li>
+      <li>드래그앤드롭으로 순서 변경</li>
+      <li>막대 양 끝 resize로 일정 조절</li>
+      <li>막대 클릭 → 상태(done/progress/todo) 변경</li>
+      <li>저장: localStorage(V1) → DB(V2 미정, 9-1 항목 참조)</li>
+    </ul>
+  </div>
+  <div class="card-box">
+    <h4>텍스트 콘텐츠 (슬랙 자동 연동) <span class="label label-done">김종원 연동 완료</span></h4>
+    <ul>
+      <li>소스: 슬랙 List <code>F0ASC4WB3V4</code> (JISOO APP Plan)</li>
+      <li>대상: 태스크명, note, deadline, 상태 필드</li>
+      <li>흐름: 슬랙 List 수정 → dev-now bot 감지 → DEV NOW 갱신</li>
+      <li>방향: 슬랙 → DEV NOW <b>단방향</b> (V2)</li>
+      <li>양방향 동기화는 V3 검토</li>
+    </ul>
+  </div>
+</div>
+
+<h2>6. 보안·접근 정책</h2>
+
+<ul class="checklist">
+  <li>HTTPS 전용 (Vercel 기본 제공)</li>
+  <li>Google OAuth 클라이언트 ID 발급 + 허용 도메인 화이트리스트 (옵션)</li>
+  <li>JWT 또는 세션 쿠키로 인증 유지 (httpOnly · secure)</li>
+  <li>관리자 작업(승인·권한 변경)은 서버에서 권한 재검증</li>
+  <li>비로그인 사용자에게 노출되는 데이터: <b>카드명·간트 막대 윤곽만</b>. 메모·담당자·링크 등은 모달 안에 있으므로 미노출</li>
+  <li>로그아웃 시 토큰 즉시 폐기 + localStorage 캐시 비움</li>
+</ul>
+
+<h2>7. 데이터 모델 <span class="label label-proposal">제안</span></h2>
+
+<blockquote>
+  아래는 PM 제안. 최종 스키마는 개발팀에서 결정.
+</blockquote>
+
+<h3>7-1. User</h3>
+<table>
+<thead><tr><th>필드</th><th>타입</th><th>설명</th></tr></thead>
+<tbody>
+<tr><td>id</td><td>uuid</td><td>식별자</td></tr>
+<tr><td>email</td><td>string</td><td>Google 계정 이메일</td></tr>
+<tr><td>name</td><td>string</td><td>표시명</td></tr>
+<tr><td>avatar</td><td>string (URL)</td><td>Google 프로필 이미지</td></tr>
+<tr><td>role</td><td>enum</td><td><code>viewer</code> · <code>editor</code> · <code>admin</code></td></tr>
+<tr><td>status</td><td>enum</td><td><code>pending</code> · <code>approved</code> · <code>rejected</code></td></tr>
+<tr><td>createdAt</td><td>timestamp</td><td>가입 요청 시각</td></tr>
+<tr><td>approvedAt</td><td>timestamp</td><td>승인 시각</td></tr>
+<tr><td>approvedBy</td><td>uuid</td><td>승인자 User.id</td></tr>
+</tbody>
+</table>
+
+<h3>7-2. Task (DEV NOW 카드)</h3>
+<table>
+<thead><tr><th>필드</th><th>타입</th><th>출처</th><th>설명</th></tr></thead>
+<tbody>
+<tr><td>id</td><td>string</td><td>슬랙 또는 자체</td><td>슬랙 List 행 ID 또는 자체 ID</td></tr>
+<tr><td>slackListItemId</td><td>string</td><td>슬랙</td><td>슬랙 동기화 키. 없으면 DEV NOW 수동 생성</td></tr>
+<tr><td>name · note · pjt · dev</td><td>—</td><td><b>슬랙 (덮어쓰기)</b></td><td>매 sync마다 슬랙 값으로 갱신</td></tr>
+<tr><td>start · end · phases · lifecycle · product</td><td>—</td><td><b>DEV NOW (보존)</b></td><td>간트 일정·메타. 슬랙에 없으니 sync 시 보존</td></tr>
+<tr><td><b>flagged</b></td><td>boolean</td><td><b>DEV NOW (보존)</b></td><td>부회장님 확인 필요 별표. 편집자만 토글</td></tr>
+<tr><td>updatedAt / updatedBy</td><td>—</td><td>자동</td><td>마지막 편집 정보</td></tr>
+</tbody>
+</table>
+
+<h3>7-3. POC</h3>
+<table>
+<thead><tr><th>필드</th><th>타입</th><th>설명</th></tr></thead>
+<tbody>
+<tr><td>id, name, desc, tag, link, images, assignees</td><td>—</td><td>V1과 동일</td></tr>
+<tr><td>created, updated</td><td>date</td><td>정렬용</td></tr>
+</tbody>
+</table>
+
+<h2>8. 결정 매트릭스</h2>
+
+<div class="decision">
+  <b>1. 백엔드·DB 인프라</b>
+  <div class="decided-row" style="margin-top:0;">결정: <span class="label label-done">개발팀 결정 위임</span> — PM은 관여 안 함. 개발팀이 Supabase / Vercel KV / Firebase 등 자율 선택</div>
+</div>
+
+<div class="decision">
+  <b>2. 슬랙 List 동기화 주기</b>
+  <div class="decided-row" style="margin-top:0;">결정: <span class="label label-done">매일 (daily)</span> — 하루 1회 batch sync. 새벽 또는 출근 전 정기 실행. 실시간 webhook은 V3</div>
+</div>
+
+<div class="decision">
+  <b>3. 모달에서 편집 가능 여부</b>
+  <div class="decided-row" style="margin-top:0;">결정: <span class="label label-done">옵션 B (모달 안 인라인 편집)</span> — 편집자 권한일 때 모달 우상단 "편집" 버튼 → 같은 모달에서 폼 전환. 슬랙 sync 필드(name, pjt, dev, note)는 read-only로 잠금</div>
+</div>
+
+<div class="decision">
+  <b>4. 비로그인 사용자가 보는 정보의 깊이</b>
+  <div class="decided-row" style="margin-top:0;">결정: <span class="label label-done">옵션 B + 강한 블러</span> — 카드명·간트 막대 윤곽 노출하되 <b>blur(8px) 이상</b> 강하게 처리. 무엇이 있다는 신호만 주고 텍스트는 절대 안 읽히게</div>
+</div>
+
+<div class="decision">
+  <b>5. 가입 승인 후 알림</b>
+  <div class="decided-row" style="margin-top:0;">결정: <span class="label label-done">옵션 A (알림 없음)</span> — 가입자가 직접 다시 접속해서 확인. V2는 최소 기능</div>
+</div>
+
+<div class="decision">
+  <b>6. 슬랙 List ↔ DEV NOW 데이터 정책</b>
+  <div class="decided-row" style="margin-top:0;">결정: <span class="label label-done">슬랙이 source of truth</span> — DEV NOW의 기존 데이터는 매 sync마다 <b>슬랙 기준으로 덮어쓰기 OK</b>. 단 DEV NOW 자체 메타(별표·간트 일정·phases·lifecycle 등 슬랙에 없는 필드)는 보존</div>
+</div>
+
+<div class="decision">
+  <b>7. 디자인 톤</b>
+  <div class="decided-row" style="margin-top:0;">결정: <span class="label label-done">옵션 A (다크 톤 유지)</span> — V1 디자인 그대로. 라이트 모드 X</div>
+</div>
+
+<h2>9. 법적·운영 체크리스트</h2>
+
+<ul class="checklist">
+  <li>내부 사용 도구지만 외부 도메인(vercel.app)에 배포되므로 confidential 명시 필요</li>
+  <li>가입 신청 시 약관·개인정보 동의 (이메일·이름만 수집) — 1줄 안내로 충분</li>
+  <li>로그·접근 기록 보관 (누가 언제 무엇을 편집했는지) — V3</li>
+  <li>관리자 권한 박탈 / 계정 비활성화 절차 — 어드민 화면에서</li>
+  <li>슬랙 List 데이터를 외부에 노출하지 않음 (인증 통과한 사용자에게만)</li>
+</ul>
+
+<div class="terms">
+  <h3>용어 정리</h3>
+  <dl>
+    <dt>POC (Proof of Concept)</dt>
+    <dd>개발팀이 본 제품에 들어가기 전 빠르게 검증한 실험 결과물. 정식 출시되지 않은 프로토타입·MVP 등.</dd>
+
+    <dt>슬랙 List</dt>
+    <dd>슬랙의 데이터베이스형 보드 기능. 행마다 필드(컬럼)를 가짐. 본 PRD에서는 "JISOO APP Plan" 보드(F0ASC4WB3V4)를 지칭.</dd>
+
+    <dt>dev-now bot</dt>
+    <dd>슬랙 List 변경을 감지하여 DEV NOW에 반영하는 자동화 봇. 김종원이 셋업 완료. #jisoo-v2 채널에 추가됨.</dd>
+
+    <dt>Google OAuth</dt>
+    <dd>Google 계정으로 로그인하는 표준 인증 방식. 사용자가 비밀번호를 별도로 만들지 않아도 됨.</dd>
+
+    <dt>역할 (role) / 상태 (status)</dt>
+    <dd>role은 권한 레벨(viewer/editor/admin), status는 가입 상태(pending/approved/rejected). 둘은 독립적 — 승인된 뷰어, 거절된 편집자 등 조합 가능.</dd>
+  </dl>
+</div>
+
+</body>
+</html>

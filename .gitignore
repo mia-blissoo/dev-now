@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Vercel
+.vercel/
+
+# 환경변수
+.env
+.env.*
+
+# 로컬 임시
+*.log
+tmp/

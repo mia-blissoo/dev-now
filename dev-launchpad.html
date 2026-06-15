@@ -1,0 +1,1968 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DEV NOW</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{background:#0d0d0d}
+body{
+  font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  background:#0d0d0d;color:#f5f5f7;
+  min-height:100vh;min-height:100dvh;
+  -webkit-font-smoothing:antialiased;
+  -webkit-text-size-adjust:100%;
+  letter-spacing:-0.02em;
+}
+.app{max-width:540px;margin:0 auto;min-height:100vh;min-height:100dvh;overflow-x:hidden}
+
+/* ── Header ── */
+header{padding:60px 16px 0}
+.title{font-size:34px;font-weight:800;line-height:1.12;letter-spacing:-0.03em;color:#f5f5f7}
+.subtitle{font-size:13px;font-weight:400;color:#86868b;margin-top:6px}
+
+/* ── GNB ── */
+.gnb{display:flex;gap:4px;border-bottom:1px solid rgba(255,255,255,.08);margin-top:32px}
+.tab{
+  background:none;border:none;color:#86868b;
+  font-family:inherit;font-size:15px;font-weight:600;
+  padding:12px 16px 14px;cursor:pointer;
+  position:relative;transition:color .2s;white-space:nowrap;
+  min-height:44px;
+}
+.tab.active{color:#f5f5f7}
+.tab.active::after{
+  content:'';position:absolute;bottom:-1px;left:8px;right:8px;
+  height:2px;background:#f5f5f7;border-radius:1px;
+}
+.tab:hover{color:#b0b0b0}
+.tab.active:hover{color:#f5f5f7}
+.tab .arrow{font-size:11px;margin-left:3px;opacity:.5}
+
+/* ── Panels ── */
+.panel{display:none;animation:fadeIn .3s ease}
+.panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Sub-header (version + view toggle) ── */
+.sub-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:24px 20px 0;
+}
+.version-label{
+  font-size:13px;font-weight:600;color:#86868b;
+  display:flex;align-items:center;gap:8px;
+}
+.version-label .live{
+  display:inline-block;width:6px;height:6px;
+  background:#f5f5f7;border-radius:50%;
+  animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+
+.view-toggle{display:flex;gap:0;background:rgba(255,255,255,.06);border-radius:8px;padding:2px;overflow:hidden}
+.vt{
+  background:none;border:none;color:#86868b;
+  font-family:inherit;font-size:13px;font-weight:500;
+  padding:6px 14px;cursor:pointer;transition:all .2s;
+  border-radius:6px;min-height:32px;
+}
+.vt.active{background:rgba(255,255,255,.12);color:#f5f5f7}
+.vt:hover{color:#b0b0b0}
+.vt.active:hover{color:#f5f5f7}
+
+/* ── Updated label ── */
+.updated-label{font-size:12px;color:#48484a;padding:6px 20px 0;font-weight:400}
+
+/* ══════════ GANTT VIEW ══════════ */
+.gantt-view{display:none}
+.gantt-view.active{display:block}
+.gantt-wrap{padding:16px 0 0}
+
+.gantt{display:flex;overflow:hidden}
+.gantt-labels{
+  flex-shrink:0;width:120px;padding-left:20px;
+  background:#0d0d0d;z-index:2;
+}
+.gantt-label{
+  height:36px;display:flex;align-items:center;
+  font-size:13px;font-weight:400;color:#86868b;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+  cursor:pointer;transition:color .15s;
+}
+.gantt-label:hover{color:#f5f5f7}
+.gantt-label .dot{
+  width:5px;height:5px;border-radius:50%;flex-shrink:0;
+  margin-left:6px;background:#f5f5f7;
+  animation:pulse 2s ease-in-out infinite;
+}
+.gantt-label-hdr{height:38px}
+
+.gantt-timeline{
+  flex:1;overflow-x:auto;overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;padding-right:20px;
+}
+.gantt-timeline::-webkit-scrollbar{display:none}
+.gantt-grid{position:relative}
+
+.g-months{display:flex;height:20px;margin-bottom:2px}
+.g-month{font-size:13px;font-weight:600;color:#86868b;padding-left:2px}
+.g-days{display:flex;height:16px;margin-bottom:6px;position:relative}
+.g-day{font-size:11px;font-weight:400;color:#48484a;text-align:center;flex-shrink:0;position:absolute}
+.g-day.mon{color:#636366}
+
+.g-rows{position:relative}
+.g-row{height:36px;position:relative;cursor:pointer}
+.g-row:hover .g-bar{opacity:.75}
+.g-gridline{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.04);pointer-events:none}
+
+.g-bar{
+  position:absolute;height:20px;top:8px;
+  border-radius:5px;transition:opacity .15s;overflow:hidden;
+}
+.g-bar.done{background:#3a3a3c}
+.g-bar.progress{background:rgba(255,255,255,.85);box-shadow:0 0 12px rgba(255,255,255,.06)}
+.g-bar.progress::after{
+  content:'';position:absolute;inset:0;border-radius:5px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);
+  animation:shimmer 2.5s ease-in-out infinite;
+}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.g-bar.todo{background:transparent;border:1px solid rgba(255,255,255,.1)}
+.g-bar.ongoing{
+  background:rgba(255,255,255,.85);
+  mask-image:linear-gradient(to right,#000 70%,transparent);
+  -webkit-mask-image:linear-gradient(to right,#000 70%,transparent);
+}
+.g-bar.ongoing::after{
+  content:'';position:absolute;inset:0;border-radius:5px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);
+  animation:shimmer 2.5s ease-in-out infinite;
+}
+.g-bar.milestone{
+  width:10px!important;height:10px;top:13px;
+  background:#fff;transform:rotate(45deg);border-radius:1px;
+}
+
+.g-today{position:absolute;top:0;bottom:0;width:1px;background:rgba(255,255,255,.2);z-index:1;pointer-events:none}
+.g-today-label{position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;color:#636366;white-space:nowrap}
+
+.gantt-legend{display:flex;gap:16px;padding:14px 20px;font-size:12px;font-weight:400;color:#636366;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-swatch{width:10px;height:10px;border-radius:3px}
+.legend-swatch.done{background:#3a3a3c}
+.legend-swatch.progress{background:rgba(255,255,255,.85)}
+.legend-swatch.todo{border:1px solid rgba(255,255,255,.1)}
+.legend-swatch.milestone{background:#fff;transform:rotate(45deg);border-radius:1px;width:8px;height:8px}
+.legend-swatch.hold{background:#3a3a3c;opacity:.5}
+
+/* ── Product filter pills ── */
+.prod-pills{
+  display:flex;gap:6px;padding:14px 20px 0;flex-wrap:wrap;
+}
+.prod-pill{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);
+  color:#86868b;font-family:inherit;font-size:12px;font-weight:600;
+  padding:5px 12px;border-radius:999px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+  transition:all .15s;
+}
+.prod-pill:hover{border-color:rgba(255,255,255,.12);color:#b0b0b0}
+.prod-pill.active{background:rgba(255,255,255,.12);color:#f5f5f7;border-color:rgba(255,255,255,.2)}
+.prod-pill .swatch{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* ── New Gantt (label expand + sub-rows + milestone) ── */
+.g-row.is-sub{height:26px;background:rgba(255,255,255,.015)}
+.gantt-label.is-sub{
+  font-size:11px;color:#636366;padding-left:18px;
+  height:26px;
+}
+.gantt-label .expand{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:14px;height:14px;margin-right:4px;color:#48484a;flex-shrink:0;
+  font-size:9px;line-height:1;
+}
+.gantt-label.is-sub .expand{visibility:hidden}
+.gantt-label.is-hold{color:#48484a}
+.gantt-label.is-hold .lc-tag{
+  font-size:9px;color:#48484a;background:rgba(255,255,255,.04);
+  padding:1px 5px;border-radius:3px;margin-left:5px;
+  border:1px solid rgba(255,255,255,.06);
+}
+
+.g-bar.sub{height:14px;top:6px;border-radius:3px}
+.g-bar.sub-todo{
+  background-image:repeating-linear-gradient(
+    45deg, rgba(255,255,255,.25) 0 2px, transparent 2px 5px);
+  opacity:.5;
+}
+.g-bar.sub-done{opacity:.85}
+.g-bar.sub-progress{box-shadow:0 0 0 1.5px rgba(13,13,13,1), 0 0 0 2.5px currentColor}
+
+.g-bar.hold{background:#3a3a3c!important;opacity:.55}
+
+/* 막대 양 끝 resize handle (편집 모드만) */
+.g-bar-handle{
+  position:absolute;top:0;bottom:0;
+  width:8px;background:transparent;cursor:ew-resize;
+  z-index:3;display:none;touch-action:none;
+}
+.edit-mode .g-bar:not(.hold) .g-bar-handle{display:block}
+.g-bar-handle.left{left:-3px}
+.g-bar-handle.right{right:-3px}
+.edit-mode .g-bar:not(.hold) .g-bar-handle:hover{
+  background:rgba(255,255,255,.4);border-radius:2px;
+}
+.g-bar.resizing{z-index:5;box-shadow:0 0 0 1.5px #fff}
+.bar-tooltip{
+  position:absolute;top:-22px;left:50%;transform:translateX(-50%);
+  background:rgba(255,255,255,.9);color:#0d0d0d;
+  font-size:10px;font-weight:600;
+  padding:2px 6px;border-radius:4px;
+  white-space:nowrap;pointer-events:none;
+  font-variant-numeric:tabular-nums;
+}
+
+.g-milestone{
+  position:absolute;width:10px;height:10px;top:13px;
+  background:#fff;transform:translateX(-50%) rotate(45deg);border-radius:1px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.5);z-index:2;
+}
+.g-milestone-label{
+  position:absolute;top:30px;transform:translateX(-50%);
+  font-size:9px;font-weight:600;color:#f5f5f7;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12);
+  padding:1px 5px;border-radius:3px;white-space:nowrap;z-index:2;
+}
+
+/* ── Drag and drop (edit mode) ── */
+.edit-mode .gantt-label:not(.is-sub):not(.gantt-label-hdr){
+  cursor:grab;
+  touch-action:none;
+}
+.edit-mode .gantt-label:not(.is-sub):not(.gantt-label-hdr):active{cursor:grabbing}
+.edit-mode .gantt-label:not(.is-sub):not(.gantt-label-hdr)::before{
+  content:'⋮⋮';
+  color:#48484a;
+  font-size:10px;
+  margin-right:6px;
+  line-height:1;
+  letter-spacing:-1px;
+}
+.drag-ghost{
+  opacity:.3;background:rgba(255,255,255,.05);
+}
+.drag-chosen{
+  background:rgba(255,255,255,.08);
+}
+.drag-drag{
+  background:rgba(255,255,255,.12)!important;
+  box-shadow:0 4px 16px rgba(0,0,0,.5);
+}
+
+.edit-mode .g-row[data-action="detail"]{cursor:pointer}
+.edit-mode .g-row[data-action="detail"]:hover{background:rgba(255,255,255,.02)}
+.edit-mode .gantt-labels{border-right:1px dashed rgba(255,255,255,.08)}
+.edit-hint-bar{
+  display:none;padding:8px 20px 0;font-size:11px;color:#48484a;
+  font-style:italic;
+}
+.edit-mode .edit-hint-bar{display:block}
+
+/* ══════════ CARD VIEW ══════════ */
+.card-view{display:none}
+.card-view.active{display:block}
+.card-list{padding:12px 16px 0;display:flex;flex-direction:column;gap:12px}
+
+.task-card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:16px;
+  overflow:hidden;cursor:pointer;
+  opacity:0;transform:translateY(8px);
+  transition:opacity .3s ease,transform .3s ease,border-color .2s,background .15s;
+}
+.task-card.visible{opacity:1;transform:translateY(0)}
+.task-card:hover{border-color:rgba(255,255,255,.12)}
+.task-card:active{background:rgba(255,255,255,.07)}
+.tc-body{padding:16px 18px}
+
+.tc-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.tc-name{font-size:16px;font-weight:600;color:#f5f5f7;flex:1;line-height:1.35}
+.tc-deadline{font-size:12px;font-weight:500;color:#636366;white-space:nowrap;margin-top:10px}
+.tc-deadline.overdue{color:#a1a1a6}
+
+.tc-note{
+  font-size:14px;font-weight:400;color:#86868b;line-height:1.5;margin-top:6px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+
+.tc-badge{
+  font-size:12px;font-weight:500;padding:4px 12px;border-radius:20px;white-space:nowrap;flex-shrink:0;
+}
+.tc-badge.progress{color:#f5f5f7;background:rgba(255,255,255,.1)}
+.tc-badge.done{color:#86868b;background:rgba(255,255,255,.06)}
+.tc-badge.todo{color:#48484a;background:rgba(255,255,255,.04)}
+
+/* ══════════ DETAIL OVERLAY ══════════ */
+.detail-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);
+  opacity:0;pointer-events:none;transition:opacity .25s;z-index:99;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+.detail-backdrop.open{opacity:1;pointer-events:auto}
+
+.detail-overlay{
+  position:fixed;bottom:0;left:0;right:0;
+  background:#1c1c1e;
+  border-radius:14px 14px 0 0;
+  padding:0 24px 48px;
+  transform:translateY(100%);transition:transform .35s cubic-bezier(.32,.72,0,1);
+  z-index:100;max-height:75vh;overflow-y:auto;
+}
+.detail-overlay.open{transform:translateY(0)}
+.detail-overlay::-webkit-scrollbar{display:none}
+
+.detail-handle{
+  width:36px;height:4px;background:#48484a;border-radius:2px;
+  margin:10px auto 28px;
+}
+.detail-name{font-size:22px;font-weight:700;color:#f5f5f7;line-height:1.3;margin-bottom:24px;letter-spacing:-0.02em}
+
+.detail-section{margin-bottom:24px}
+.detail-label{font-size:12px;font-weight:600;color:#636366;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px}
+.detail-row{display:flex;gap:12px;margin-bottom:6px;align-items:center}
+.detail-key{font-size:15px;font-weight:500;color:#636366;width:36px;flex-shrink:0}
+.detail-val{font-size:15px;font-weight:500}
+.detail-val.done{color:#a1a1a6}
+.detail-val.progress{color:#f5f5f7}
+.detail-val.todo{color:#48484a}
+
+.detail-note{font-size:15px;font-weight:400;color:#a1a1a6;line-height:1.6;white-space:pre-line}
+.detail-deadline{font-size:15px;font-weight:500;color:#a1a1a6}
+.detail-deadline.overdue{color:#f5f5f7}
+.detail-actions{margin-top:28px;display:flex;gap:8px}
+.detail-actions .ef-btn{flex:1}
+
+/* 간트뷰 하단 + 태스크 추가 슬롯 (편집 모드만) */
+.gantt-add-slot{
+  display:none;
+  margin:14px 20px 4px;
+  padding:14px;
+  border:1px dashed rgba(255,255,255,.08);
+  border-radius:12px;
+  text-align:center;
+  color:#48484a;
+  font-size:14px;font-weight:500;
+  cursor:pointer;
+  transition:all .15s;
+}
+.edit-mode .gantt-add-slot{display:block}
+.gantt-add-slot:hover{border-color:rgba(255,255,255,.15);color:#636366}
+
+/* ══════════ POC (Cards) ══════════ */
+.poc-wrap{padding:28px 16px}
+.poc-hdr-row{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:16px;gap:12px;
+}
+.poc-section-label{font-size:13px;font-weight:600;color:#86868b;text-transform:uppercase;letter-spacing:.04em}
+.poc-sort{
+  display:inline-flex;background:rgba(255,255,255,.06);border-radius:7px;padding:2px;gap:2px;
+}
+.poc-sort button{
+  appearance:none;border:0;background:transparent;
+  color:#86868b;font-family:inherit;font-size:11px;font-weight:500;
+  padding:5px 10px;border-radius:5px;cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.poc-sort button.active{background:rgba(255,255,255,.12);color:#f5f5f7}
+.poc-sort button:hover{color:#b0b0b0}
+.poc-sort button.active:hover{color:#f5f5f7}
+
+.poc-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+}
+.poc-card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:14px;
+  padding:14px 16px;overflow:hidden;
+  opacity:0;transform:translateY(10px);
+  transition:opacity .35s ease,transform .35s ease,border-color .2s;
+  display:flex;flex-direction:column;min-width:0;
+}
+.poc-card.visible{opacity:1;transform:translateY(0)}
+.poc-card:hover{border-color:rgba(255,255,255,.12)}
+.poc-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:6px;min-width:0}
+.poc-name{font-size:14px;font-weight:600;color:#f5f5f7;line-height:1.3;flex:1;min-width:0;word-break:keep-all}
+.poc-tag{font-size:10px;font-weight:500;color:#86868b;background:rgba(255,255,255,.06);padding:2px 7px;border-radius:5px;white-space:nowrap;flex-shrink:0}
+.poc-desc{
+  font-size:12px;font-weight:400;color:#86868b;line-height:1.45;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+}
+.poc-meta{font-size:10px;color:#48484a;margin-top:8px;font-variant-numeric:tabular-nums}
+.poc-link{display:inline-block;margin-top:8px;font-size:12px;font-weight:500;color:#636366;text-decoration:none;transition:color .2s}
+.poc-link:hover{color:#a1a1a6}
+.poc-card.add-slot{
+  border-style:dashed;border-color:rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;
+  min-height:80px;color:#48484a;font-size:13px;font-weight:500;cursor:pointer;
+  opacity:0;transform:translateY(10px);
+  grid-column:1 / -1;
+}
+.poc-card.add-slot.visible{opacity:1;transform:translateY(0)}
+.poc-card.add-slot:hover{border-color:rgba(255,255,255,.15);color:#636366}
+
+/* ── Footer ── */
+.footer{padding:40px 20px 48px;font-size:12px;font-weight:400;color:#2c2c2e;text-align:center}
+.footer-actions{display:none;justify-content:center;gap:14px;margin-top:10px;flex-wrap:wrap}
+.edit-mode .footer-actions{display:flex}
+.footer-actions button{
+  background:none;border:0;color:#636366;
+  font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;
+  padding:4px 8px;border-radius:6px;
+  transition:all .15s;
+}
+.footer-actions button:hover{color:#a1a1a6;background:rgba(255,255,255,.04)}
+.footer-actions .sep{color:#2c2c2e;font-size:11px}
+
+/* ══════════ EDIT MODE ══════════ */
+.edit-fab{
+  position:fixed;bottom:24px;right:24px;z-index:50;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);
+  color:#86868b;font-family:inherit;font-size:13px;font-weight:600;
+  padding:10px 22px;border-radius:20px;cursor:pointer;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  transition:all .2s;letter-spacing:.02em;
+}
+.edit-fab:hover{background:rgba(255,255,255,.15);color:#f5f5f7}
+.edit-fab.active{background:rgba(255,255,255,.85);color:#0d0d0d;border-color:transparent}
+.edit-fab.active:hover{background:#f5f5f7}
+
+.edit-mode .task-card{border-style:dashed}
+.edit-mode .poc-card:not(.add-slot){border-style:dashed}
+.edit-mode .task-card::after,
+.edit-mode .poc-card:not(.add-slot)::after{
+  content:'tap to edit';position:absolute;bottom:8px;right:12px;
+  font-size:11px;color:#48484a;opacity:0;transition:opacity .2s;pointer-events:none;
+}
+.edit-mode .task-card:hover::after,
+.edit-mode .poc-card:not(.add-slot):hover::after{opacity:1}
+.task-card,.poc-card:not(.add-slot){position:relative}
+
+.add-task-slot{
+  border:1px dashed rgba(255,255,255,.08);border-radius:12px;
+  display:none;align-items:center;justify-content:center;
+  min-height:56px;color:#48484a;font-size:14px;font-weight:500;
+  cursor:pointer;margin-top:10px;transition:all .2s;
+}
+.edit-mode .add-task-slot{display:flex}
+.add-task-slot:hover{border-color:rgba(255,255,255,.15);color:#636366}
+
+/* ── Edit Form (in overlay) ── */
+.ef-group{margin-bottom:20px}
+.ef-label{font-size:12px;font-weight:600;color:#636366;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;display:block}
+.ef-input,.ef-textarea,.ef-date{
+  width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  border-radius:8px;color:#f5f5f7;font-family:inherit;font-size:15px;font-weight:400;
+  padding:10px 14px;outline:none;transition:border-color .2s;
+}
+.ef-input:focus,.ef-textarea:focus,.ef-date:focus{border-color:rgba(255,255,255,.3)}
+.ef-textarea{min-height:80px;resize:vertical;line-height:1.5}
+.ef-date{width:auto;font-size:14px;color-scheme:dark}
+.ef-dates{display:flex;gap:12px}
+.ef-dates>div{flex:1}
+
+.ef-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.ef-key{font-size:14px;font-weight:500;color:#636366;width:32px;flex-shrink:0}
+.ef-status-btns{display:flex;gap:4px}
+.ef-sbtn{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  color:#636366;font-family:inherit;font-size:12px;font-weight:500;
+  padding:5px 12px;border-radius:6px;cursor:pointer;transition:all .15s;
+}
+.ef-sbtn:hover{border-color:rgba(255,255,255,.2)}
+.ef-sbtn.active{background:rgba(255,255,255,.12);color:#f5f5f7;border-color:rgba(255,255,255,.2)}
+
+.ef-actions{display:flex;gap:8px;margin-top:28px}
+.ef-btn{
+  flex:1;padding:12px;border:none;border-radius:10px;
+  font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:all .15s;
+}
+.ef-btn.save{background:rgba(255,255,255,.85);color:#0d0d0d}
+.ef-btn.save:hover{background:#f5f5f7}
+.ef-btn.delete{background:rgba(255,255,255,.06);color:#636366}
+.ef-btn.delete:hover{background:rgba(255,255,255,.1);color:#a1a1a6}
+
+.ef-export{
+  display:none;margin-top:12px;width:100%;padding:10px;
+  background:none;border:1px solid rgba(255,255,255,.08);border-radius:8px;
+  color:#48484a;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;
+}
+.edit-mode .ef-export{display:block}
+.ef-export:hover{border-color:rgba(255,255,255,.15);color:#636366}
+
+.ef-toast{
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:rgba(255,255,255,.9);color:#0d0d0d;
+  font-family:inherit;font-size:14px;font-weight:600;
+  padding:10px 24px;border-radius:20px;
+  opacity:0;transition:all .3s;z-index:200;pointer-events:none;
+}
+.ef-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ══════════ ASSIGNEES & THUMBNAILS ══════════ */
+.tc-assignees{font-size:12px;font-weight:400;color:#636366;margin-top:8px}
+.tc-thumb{
+  width:100%;height:160px;object-fit:cover;display:block;
+}
+
+.poc-thumb{width:calc(100% + 32px);aspect-ratio:1/1;object-fit:cover;margin:-14px -16px 12px;display:block}
+
+.ef-members{display:flex;flex-wrap:wrap;gap:6px}
+.ef-member{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  color:#636366;font-family:inherit;font-size:13px;font-weight:500;
+  padding:6px 14px;border-radius:8px;cursor:pointer;transition:all .15s;
+}
+.ef-member:hover{border-color:rgba(255,255,255,.2)}
+.ef-member.active{background:rgba(255,255,255,.12);color:#f5f5f7;border-color:rgba(255,255,255,.2)}
+
+.ef-img-grid{display:flex;gap:8px;flex-wrap:wrap}
+.ef-img-item{
+  position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.1);flex-shrink:0;
+}
+.ef-img-item img{width:100%;height:100%;object-fit:cover}
+.ef-img-item .ef-img-badge{
+  position:absolute;bottom:2px;left:2px;
+  font-size:9px;font-weight:700;color:#0d0d0d;background:rgba(255,255,255,.85);
+  padding:1px 5px;border-radius:3px;
+}
+.ef-img-item .ef-img-del{
+  position:absolute;top:2px;right:2px;
+  width:18px;height:18px;border-radius:9px;
+  background:rgba(0,0,0,.6);border:none;color:#f5f5f7;
+  font-size:12px;line-height:18px;text-align:center;cursor:pointer;
+}
+.ef-img-add{
+  width:72px;height:72px;border-radius:8px;
+  border:1px dashed rgba(255,255,255,.1);
+  display:flex;align-items:center;justify-content:center;
+  color:#48484a;font-size:20px;cursor:pointer;transition:all .2s;flex-shrink:0;
+}
+.ef-img-add:hover{border-color:rgba(255,255,255,.2);color:#636366}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="title">DEV NOW</div>
+    <div class="subtitle">개발팀의 업무 진행상황을 한눈에</div>
+    <nav class="gnb">
+      <button class="tab active" data-tab="devnow">DEV NOW</button>
+      <button class="tab" data-tab="poc">POC</button>
+      <button class="tab" data-tab="daily">Daily Enter <span class="arrow">↗</span></button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="devnow" class="panel active"></section>
+    <section id="poc" class="panel"></section>
+  </main>
+
+  <div class="detail-backdrop" id="detailBackdrop"></div>
+  <div class="detail-overlay" id="detailOverlay"></div>
+  <div class="footer">
+    <span id="footerUpdated"></span>BLISSOO DEV TEAM
+    <div class="footer-actions">
+      <button id="exportBackupBtn">백업 내보내기 (JSON)</button>
+      <span class="sep">·</span>
+      <button id="importBackupBtn">백업 가져오기</button>
+      <input type="file" id="importBackupInput" accept=".json,application/json" hidden>
+    </div>
+  </div>
+  <button class="edit-fab" id="editFab" onclick="toggleEditMode()">EDIT</button>
+  <div class="ef-toast" id="efToast"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  DATA — 이 객체들만 수정하면 화면이 갱신됩니다
+// ═══════════════════════════════════════════════════
+
+const PRODUCTS = [
+  { id: 'jisoo-app', name: 'JISOO APP', color: '#a78bfa' },
+  { id: 'dott',      name: 'DOT.T',     color: '#f472b6' },
+  { id: 'common',    name: '공통',       color: '#38bdf8' },
+];
+
+const TASKS = [
+  {
+    name: '다크모드/라이트모드 분리',
+    product: 'jisoo-app',
+    pjt: 'progress', dev: 'progress',
+    note: '(06.11) iOS 심사완료, AOS 심사대기중. 라이트모드 추가 작업은 JISOO APP 2.9.0에서 진행',
+    deadline: '2026-05-29',
+    start: '2026-05-12', end: '2026-06-30',
+    lifecycle: 'active',
+    phases: [
+      { name: '디자인', status: 'done', start: '2026-05-12', end: '2026-05-30' },
+      { name: '개발', status: 'done', start: '2026-05-15', end: '2026-06-10' },
+      { name: 'QA / 심사', status: 'progress', start: '2026-06-08', end: '2026-06-20' },
+      { name: '출시', type: 'milestone', status: 'todo', start: '2026-06-25', end: '2026-06-25' },
+    ],
+  },
+  {
+    name: '신규 싱글 앨범 (인형)',
+    product: 'jisoo-app',
+    pjt: 'progress', dev: 'progress',
+    note: '(05.26) NFC 샘플 test url 랜딩 OK. (06.08) Xinyetong 추가 견적 약 193만원/1만개 — 양산 진입',
+    deadline: '2026-07-30',
+    start: '2026-05-01', end: '2026-07-30',
+    lifecycle: 'active',
+    phases: [
+      { name: 'NFC 업체 컨택', status: 'done', start: '2026-05-01', end: '2026-05-19' },
+      { name: '공장 결정 / 시료', status: 'done', start: '2026-05-20', end: '2026-06-08' },
+      { name: '양산', status: 'progress', start: '2026-06-09', end: '2026-07-10' },
+      { name: '배송 / 입고', status: 'todo', start: '2026-07-11', end: '2026-07-25' },
+      { name: '앨범 출시', type: 'milestone', status: 'todo', start: '2026-07-30', end: '2026-07-30' },
+    ],
+  },
+  {
+    name: '프라이빗채팅 (아티스트)',
+    product: 'jisoo-app',
+    pjt: 'progress', dev: 'progress',
+    note: '웹소켓 리뉴얼은 테스트 단계. (06.11) JISOO APP 2.9.0에서 아이폰 메신저 UIUX 스타일로 전면 개편 예정',
+    deadline: '',
+    start: '2026-05-01', end: '2026-06-30',
+    lifecycle: 'active',
+    phases: [
+      { name: '웹소켓 리뉴얼 설계', status: 'done', start: '2026-05-01', end: '2026-05-12' },
+      { name: '개발', status: 'done', start: '2026-05-06', end: '2026-05-20' },
+      { name: '테스트', status: 'done', start: '2026-05-13', end: '2026-06-10' },
+      { name: 'UIUX 전면 개편 (2.9.0)', status: 'progress', start: '2026-06-11', end: '2026-06-24' },
+    ],
+  },
+  {
+    name: '온라인 스토어 (국내, 해외)',
+    product: 'jisoo-app',
+    pjt: 'progress', dev: 'progress',
+    note: '(05.26) Stripe 계정 생성 완료, store.jisoo.kr 구성중. 두들두 법인 설립 진행. 6월말 kit 판매 위한 스토어 오픈 마지노선 검토중',
+    deadline: '',
+    start: '2026-05-01', end: '2026-08-31',
+    lifecycle: 'active',
+    phases: [
+      { name: '두들두 법인 설립 (국내)', status: 'progress', start: '2026-05-01', end: '2026-06-30' },
+      { name: 'Stripe 결제 연동', status: 'progress', start: '2026-05-22', end: '2026-06-20' },
+      { name: '쇼피파이 스토어 셋업 (store.jisoo.kr)', status: 'progress', start: '2026-05-26', end: '2026-07-15' },
+      { name: '스토어 오픈', type: 'milestone', status: 'todo', start: '2026-06-30', end: '2026-06-30' },
+      { name: '키트 발송 운영', status: 'todo', start: '2026-07-01', end: '2026-08-31' },
+    ],
+  },
+  {
+    name: '앨범 앱 (NFC 단독앱)',
+    product: 'jisoo-app',
+    pjt: 'progress', dev: 'progress',
+    note: '(06.11) NFC 앨범 플레이어 디자인 진행 (이신영). 6월 중순 심사 요청 목표. 박영주 별도 진행 — dott music으로 오픈 검토',
+    deadline: '2026-06-15',
+    start: '2026-05-19', end: '2026-07-31',
+    lifecycle: 'active',
+    phases: [
+      { name: '디자인 (NFC 플레이어)', status: 'progress', start: '2026-05-19', end: '2026-06-15' },
+      { name: '개발', status: 'progress', start: '2026-05-26', end: '2026-06-15' },
+      { name: '심사 요청', type: 'milestone', status: 'todo', start: '2026-06-15', end: '2026-06-15' },
+      { name: '출시', status: 'todo', start: '2026-06-16', end: '2026-07-31' },
+    ],
+  },
+  {
+    name: '알림',
+    product: 'jisoo-app',
+    pjt: 'progress', dev: 'progress',
+    note: '야간 동의, 커스텀 푸시 등 개발 필요',
+    deadline: '',
+    start: '2026-05-05', end: '2026-06-30',
+    lifecycle: 'active',
+    phases: [
+      { name: '야간 동의 플로우', status: 'progress', start: '2026-05-05', end: '2026-05-25' },
+      { name: '커스텀 푸시', status: 'todo', start: '2026-05-26', end: '2026-06-30' },
+    ],
+  },
+  {
+    name: '응원봉',
+    product: 'jisoo-app',
+    pjt: 'progress', dev: 'progress',
+    note: '1차 개발 완료. 8월 판매 시작 데드라인',
+    deadline: '2026-08-15',
+    start: '2026-05-01', end: '2026-08-15',
+    lifecycle: 'active',
+    phases: [
+      { name: 'i-dle 응원봉 분석', status: 'done', start: '2026-05-01', end: '2026-05-05' },
+      { name: '기획', status: 'done', start: '2026-05-04', end: '2026-05-10' },
+      { name: '디자인', status: 'progress', start: '2026-05-08', end: '2026-05-25' },
+      { name: '1차 개발', status: 'progress', start: '2026-05-13', end: '2026-06-15' },
+      { name: '티켓/좌석 제어 개발', status: 'todo', start: '2026-06-16', end: '2026-07-15' },
+      { name: '검수', status: 'todo', start: '2026-07-16', end: '2026-07-31' },
+      { name: '양산', status: 'todo', start: '2026-08-01', end: '2026-08-10' },
+      { name: '판매 시작', type: 'milestone', status: 'todo', start: '2026-08-15', end: '2026-08-15' },
+    ],
+  },
+  {
+    name: '라이브스트리밍 개선',
+    product: 'jisoo-app',
+    pjt: 'progress', dev: 'progress',
+    note: '(05.26) 종료버튼 위치(2안 빨강), 음소거 위치, 채팅 블러, 댓글 속도 제어, 다시보기 무음모드. 5/29 심사 제출 예정',
+    deadline: '2026-05-29',
+    start: '2026-05-01', end: '2026-06-10',
+    lifecycle: 'active',
+    phases: [
+      { name: '리서치 / 진단', status: 'done', start: '2026-05-01', end: '2026-05-15' },
+      { name: '개선 디자인', status: 'done', start: '2026-05-16', end: '2026-05-26' },
+      { name: '구현', status: 'done', start: '2026-05-20', end: '2026-05-28' },
+      { name: '심사 제출', type: 'milestone', status: 'todo', start: '2026-05-29', end: '2026-05-29' },
+    ],
+  },
+  {
+    name: '슈몬토피아 NFC 진품인증',
+    product: 'common',
+    pjt: 'progress', dev: 'progress',
+    note: '(05.22-23) 양재홍 야간 구축. q.shumontopia.com, 10만개 난수(12자리), 5개 언어. 부회장님 요청, 디자인 적용중',
+    deadline: '',
+    start: '2026-05-22', end: '2026-06-15',
+    lifecycle: 'active',
+    phases: [
+      { name: '도메인 + QR 생성', status: 'done', start: '2026-05-22', end: '2026-05-23' },
+      { name: '인증 페이지 + 난수 10만개', status: 'done', start: '2026-05-22', end: '2026-05-23' },
+      { name: '다국어 (5개)', status: 'done', start: '2026-05-23', end: '2026-05-23' },
+      { name: '디자인 적용', status: 'progress', start: '2026-05-24', end: '2026-06-15' },
+    ],
+  },
+  {
+    name: '차몬 랜딩페이지 (오프라인 스토어)',
+    product: 'common',
+    pjt: 'progress', dev: 'progress',
+    note: '오프라인 스토어 (차몬) 안내 랜딩페이지. 6월 요청, 진행중',
+    deadline: '',
+    start: '2026-06-01', end: '2026-06-30',
+    lifecycle: 'active',
+    phases: [],
+  },
+  {
+    name: '두들두 랜딩페이지',
+    product: 'common',
+    pjt: 'progress', dev: 'progress',
+    note: '두들두 (온라인 스토어/국내 법인) 안내 랜딩페이지. 6월 요청, 진행중',
+    deadline: '',
+    start: '2026-06-01', end: '2026-06-30',
+    lifecycle: 'active',
+    phases: [],
+  },
+  {
+    name: '팝팝 랜딩페이지',
+    product: 'common',
+    pjt: 'progress', dev: 'progress',
+    note: '팝팝 안내 랜딩페이지. 6월 요청, 진행중',
+    deadline: '',
+    start: '2026-06-01', end: '2026-06-30',
+    lifecycle: 'active',
+    phases: [],
+  },
+  {
+    name: 'UX 개선',
+    product: 'jisoo-app',
+    pjt: 'progress', dev: 'progress',
+    note: 'UX 고도화 필요',
+    deadline: '',
+    start: '2026-05-05', end: '2026-07-31',
+    lifecycle: 'active',
+    phases: [
+      { name: '리서치 / 진단', status: 'done', start: '2026-05-05', end: '2026-05-15' },
+      { name: '개선 디자인', status: 'progress', start: '2026-05-16', end: '2026-06-15' },
+      { name: '구현', status: 'todo', start: '2026-06-16', end: '2026-07-31' },
+    ],
+  },
+  {
+    name: '신규 앨범 관련 기능 (UI 리뉴얼)',
+    product: 'jisoo-app',
+    pjt: 'progress', dev: 'progress',
+    note: '앨범 컨셉별 UI 리뉴얼 — 디자인 약 2개월 소요 추정',
+    deadline: '',
+    start: '2026-06-01', end: '2026-08-15',
+    lifecycle: 'active',
+    phases: [
+      { name: '컨셉별 디자인', status: 'todo', start: '2026-06-01', end: '2026-07-30' },
+      { name: '개발', status: 'todo', start: '2026-08-01', end: '2026-08-15' },
+    ],
+  },
+  {
+    name: '오프라인 스토어 (포토부스)',
+    product: 'jisoo-app',
+    pjt: 'progress', dev: 'done',
+    note: 'iPad향으로 개발',
+    deadline: '2026-06-01',
+    start: '2026-05-12', end: '2026-05-25',
+    lifecycle: 'active',
+    phases: [
+      { name: '디자인', status: 'done', start: '2026-05-12', end: '2026-05-20' },
+      { name: 'iPad 개발', status: 'done', start: '2026-05-21', end: '2026-05-25' },
+    ],
+  },
+  {
+    name: '신규 앨범 티저 페이지',
+    product: 'jisoo-app',
+    pjt: 'todo', dev: 'todo',
+    note: '신규 앨범 컴백시 리스닝 파티 등',
+    deadline: '',
+    start: '2026-07-01', end: '2026-07-25',
+    lifecycle: 'active',
+    phases: [],
+  },
+  {
+    name: '팝업스토어: QR, 마이페이지',
+    product: 'jisoo-app',
+    pjt: 'progress', dev: 'progress',
+    note: '헬로키티는 Drop, but 다른용도로 pivot 필요',
+    deadline: '2026-05-31',
+    start: '2026-05-12', end: '2026-06-30',
+    lifecycle: 'on_hold',
+    phases: [
+      { name: 'QR 마이페이지 개발', status: 'progress', start: '2026-05-12', end: '2026-06-10' },
+      { name: '활용처 pivot 논의', status: 'todo', start: '2026-06-11', end: '2026-06-30' },
+    ],
+  },
+  {
+    name: '오프라인 스토어 (차몬)',
+    product: 'jisoo-app',
+    pjt: 'progress', dev: 'todo',
+    note: '우선 무시',
+    deadline: '',
+    start: '2026-07-01', end: '2026-08-31',
+    lifecycle: 'on_hold',
+    phases: [],
+  },
+];
+
+const GANTT_RANGE = { start: '2026-05-01', end: '2026-08-31' };
+let LAST_UPDATED = '2026-06-12';
+
+const POCS = [
+  {
+    name: '데스크탑용 IP펫',
+    desc: '줌 유행하는 Desktop Pet(shumon 버전)을 아이디어로 만들었습니다. - 중국 사용자 등 알림을 받지 못하여 대화를 늦게 들어오는 문제가 발…',
+    tag: 'POC', link: '',
+    assignees: ['박영주'],
+    created: '2026-06-01', updated: '2026-06-12',
+  },
+  {
+    name: '슈몬타로',
+    desc: 'AI 타로 리딩 — 아티스트 테마 카드 덱',
+    tag: 'POC', link: '',
+    assignees: ['박영주'],
+    created: '2026-03-01', updated: '2026-03-01',
+  },
+  {
+    name: '포토부스',
+    desc: '오프라인 매장에서 IP콜라보 프레임에 사진을 찍을 수 있는 기능',
+    tag: 'POC', link: '',
+    assignees: ['박영주', '김종원', '고유미'],
+    created: '2026-03-15', updated: '2026-03-15',
+  },
+  {
+    name: 'dot.t: K-pop aggregator',
+    desc: '팬덤 커머스 · 그룹 공동구매 플랫폼',
+    tag: 'PRODUCT', link: 'https://b816-183-98-85-122.ngrok-free.app/kr',
+    assignees: ['김종원', '고유미'],
+    created: '2026-04-01', updated: '2026-04-01',
+  },
+  {
+    name: 'dot.t 어드민 콘솔',
+    desc: '운영 이벤트 타임라인 · 활동 로그 · 권한 관리 · 비밀번호 설정 · CSV 다운로드',
+    tag: 'POC', link: 'https://auth-admin.dev.dott.com/dashboard',
+    assignees: [],
+    created: '2026-05-01', updated: '2026-05-01',
+  },
+];
+
+// ═══════════════════════════════════════════════════
+//  CONFIG & UTILS
+// ═══════════════════════════════════════════════════
+
+const DAY_W  = 28;
+const MONTH_W = 220; // 새 간트 월 컬럼 너비
+const toDate = s => new Date(s + 'T00:00:00');
+const fmt    = d => d.toISOString().split('T')[0];
+const diff   = (a, b) => Math.round((toDate(b) - toDate(a)) / 864e5);
+const today  = fmt(new Date());
+const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+const fmtShort = s => { if (!s) return ''; const d = toDate(s); return `${d.getMonth()+1}/${String(d.getDate()).padStart(2,'0')}`; };
+const isOverdue = s => s && today > s;
+let currentView = 'gantt'; // default
+let activeProductId = 'all';
+const expandedSet = new Set();
+const MEMBERS = ['최명희','박영주','김진영','김종원','양재홍','이신영','고유미'];
+
+// ── new gantt helpers ──
+const isInactive = t => t.lifecycle === 'on_hold' || t.lifecycle === 'cancelled';
+const isMilestonePhase = ph => ph && ph.type === 'milestone';
+const productById = id => PRODUCTS.find(p => p.id === id);
+
+function hexToRgba(hex, alpha) {
+  const h = hex.replace('#','');
+  const r = parseInt(h.slice(0,2), 16);
+  const g = parseInt(h.slice(2,4), 16);
+  const b = parseInt(h.slice(4,6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// 활성 프로젝트 인덱스에 따라 alpha 1.0 → 0.45 그라데이션, 비활성은 회색
+function buildColorMap(list) {
+  const active = list.filter(t => !isInactive(t));
+  const map = {};
+  active.forEach((t, i) => {
+    const base = productById(t.product)?.color || '#a1a1a6';
+    const alpha = active.length <= 1 ? 1 : 1.0 - (i / (active.length - 1)) * 0.55;
+    map[t.name] = { color: hexToRgba(base, alpha), inactive: false };
+  });
+  list.filter(isInactive).forEach(t => {
+    map[t.name] = { color: '#3a3a3c', inactive: true };
+  });
+  return map;
+}
+
+function getMonthSpans(rangeStart, rangeEnd) {
+  const start = toDate(rangeStart);
+  const end = toDate(rangeEnd);
+  const out = [];
+  let cur = new Date(start.getFullYear(), start.getMonth(), 1);
+  while (cur <= end) {
+    const monthStart = new Date(cur);
+    const monthEnd = new Date(cur.getFullYear(), cur.getMonth() + 1, 0);
+    const effStart = monthStart < start ? start : monthStart;
+    const effEnd = monthEnd > end ? end : monthEnd;
+    out.push({
+      label: MONTHS[cur.getMonth()],
+      year: cur.getFullYear(),
+      offsetDays: diff(rangeStart, fmt(effStart)),
+      days: diff(fmt(effStart), fmt(effEnd)) + 1,
+    });
+    cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
+  }
+  return out;
+}
+
+function filteredTasks() {
+  if (activeProductId === 'all') return TASKS;
+  return TASKS.filter(t => t.product === activeProductId);
+}
+
+function resizeImg(file, maxW = 400) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const r = Math.min(1, maxW / img.width);
+        const c = document.createElement('canvas');
+        c.width = img.width * r; c.height = img.height * r;
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL('image/jpeg', 0.7));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER: DEV NOW
+// ═══════════════════════════════════════════════════
+
+function renderDevNow() {
+  const el = document.getElementById('devnow');
+  const counts = { all: TASKS.length };
+  PRODUCTS.forEach(p => { counts[p.id] = TASKS.filter(t => t.product === p.id).length; });
+
+  const pills = [{ id: 'all', name: '전체', color: null }, ...PRODUCTS].map(p => {
+    const swatch = p.color ? `<span class="swatch" style="background:${p.color}"></span>` : '';
+    return `<button class="prod-pill${activeProductId===p.id?' active':''}" data-prod="${p.id}">${swatch}${p.name} ${counts[p.id]||0}</button>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="sub-header">
+      <div class="version-label"><span class="live"></span>DEV PLAN</div>
+      <div class="view-toggle">
+        <button class="vt${currentView==='gantt'?' active':''}" data-view="gantt">간트</button>
+        <button class="vt${currentView==='card'?' active':''}" data-view="card">카드</button>
+      </div>
+    </div>
+    <div class="prod-pills">${pills}</div>
+    <div class="updated-label">UPDATED ${LAST_UPDATED}</div>
+    <div class="edit-hint-bar">⋮⋮ 길게 눌러 드래그로 순서 변경 · 막대/이름 탭 = 일정·내용 편집 · 자동 저장</div>
+    <div class="gantt-view${currentView==='gantt'?' active':''}" id="ganttView"></div>
+    <div class="card-view${currentView==='card'?' active':''}" id="cardView"></div>
+  `;
+
+  renderGantt();
+  renderCards();
+  bindViewToggle();
+
+  el.querySelectorAll('.prod-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeProductId = btn.dataset.prod;
+      renderDevNow();
+      if (currentView === 'card') setTimeout(staggerTaskCards, 30);
+    });
+  });
+}
+
+// ── GANTT ──
+
+function renderGantt() {
+  const el = document.getElementById('ganttView');
+  const list = filteredTasks();
+  const colorMap = buildColorMap(list);
+
+  const total = diff(GANTT_RANGE.start, GANTT_RANGE.end) + 1;
+  const months = getMonthSpans(GANTT_RANGE.start, GANTT_RANGE.end);
+  const gridW = months.length * MONTH_W;
+  const pxPerDay = gridW / total;
+
+  // 월 구분선
+  const lines = months.map((m, i) => {
+    if (i === 0) return '';
+    return `<div class="g-gridline" style="left:${m.offsetDays * pxPerDay}px"></div>`;
+  }).join('');
+
+  const tOff = diff(GANTT_RANGE.start, today);
+  const todayHTML = (tOff >= 0 && tOff <= total)
+    ? `<div class="g-today" style="left:${tOff * pxPerDay}px"><div class="g-today-label">TODAY</div></div>`
+    : '';
+
+  // 좌측 라벨 + 우측 막대를 동시에 생성 (행 순서 매칭)
+  const labelRows = [];
+  const barRows = [];
+
+  list.forEach((t, taskIdx) => {
+    const c = colorMap[t.name];
+    const hasPhases = (t.phases || []).length > 0;
+    const expanded = expandedSet.has(t.name);
+    const expandIcon = hasPhases ? (expanded ? '▾' : '▸') : '';
+    const lcTag = c.inactive ? `<span class="lc-tag">${t.lifecycle==='cancelled'?'캔슬':'보류'}</span>` : '';
+    const shortName = t.name.length > 12 ? t.name.slice(0, 11) + '…' : t.name;
+
+    labelRows.push(`
+      <div class="gantt-label${c.inactive?' is-hold':''}" data-task-idx="${taskIdx}" data-action="toggle">
+        <span class="expand">${expandIcon}</span>${shortName}${lcTag}
+      </div>`);
+
+    // 메인 막대 (PJT 또는 DEV가 done이면 opacity 50%)
+    const isDoneTask = !c.inactive && (t.dev === 'done' || t.pjt === 'done');
+    let barHTML = '';
+    if (t.start && t.end) {
+      const sOff = Math.max(0, diff(GANTT_RANGE.start, t.start));
+      const eOff = Math.min(total - 1, diff(GANTT_RANGE.start, t.end));
+      if (eOff >= sOff) {
+        const left = sOff * pxPerDay;
+        const w = Math.max((eOff - sOff + 1) * pxPerDay, 8);
+        const cls = c.inactive ? 'hold' : '';
+        const bgStyle = c.inactive ? '' : `background:${c.color}`;
+        const opStyle = isDoneTask ? 'opacity:.5;' : '';
+        const realIdx = TASKS.indexOf(t);
+        barHTML += `<div class="g-bar ${cls}" data-resize-real-idx="${realIdx}" style="left:${left}px;width:${w}px;${bgStyle};${opStyle}">
+          <div class="g-bar-handle left" data-side="start"></div>
+          <div class="g-bar-handle right" data-side="end"></div>
+        </div>`;
+      }
+    }
+
+    // 마일스톤 (메인 행)
+    (t.phases || []).filter(isMilestonePhase).forEach(ph => {
+      if (!ph.start) return;
+      const off = diff(GANTT_RANGE.start, ph.start);
+      if (off < 0 || off > total) return;
+      const left = off * pxPerDay;
+      barHTML += `<div class="g-milestone" style="left:${left}px" title="${ph.name}: ${ph.start}"></div>`;
+      barHTML += `<div class="g-milestone-label" style="left:${left}px">${ph.name}</div>`;
+    });
+
+    barRows.push(`<div class="g-row" data-idx="${taskIdx}" data-action="detail">${barHTML}</div>`);
+
+    // 펼친 상태면 sub-row
+    if (expanded) {
+      (t.phases || []).forEach((ph, phIdx) => {
+        const phShort = ph.name.length > 14 ? ph.name.slice(0, 13) + '…' : ph.name;
+        labelRows.push(`<div class="gantt-label is-sub"><span class="expand"></span>${isMilestonePhase(ph)?'◆ ':''}${phShort}</div>`);
+
+        let subBar = '';
+        if (isMilestonePhase(ph)) {
+          if (ph.start) {
+            const off = diff(GANTT_RANGE.start, ph.start);
+            if (off >= 0 && off <= total) {
+              subBar = `<div class="g-milestone" style="left:${off * pxPerDay}px;top:8px"></div>`;
+            }
+          }
+        } else if (ph.start && ph.end) {
+          const sOff = Math.max(0, diff(GANTT_RANGE.start, ph.start));
+          const eOff = Math.min(total - 1, diff(GANTT_RANGE.start, ph.end));
+          if (eOff >= sOff) {
+            const left = sOff * pxPerDay;
+            const w = Math.max((eOff - sOff + 1) * pxPerDay, 4);
+            const subCls = ph.status === 'done' ? 'sub-done' : ph.status === 'progress' ? 'sub-progress' : 'sub-todo';
+            subBar = `<div class="g-bar sub ${subCls}" style="left:${left}px;width:${w}px;background:${c.color};color:${c.color}"></div>`;
+          }
+        }
+        barRows.push(`<div class="g-row is-sub">${subBar}</div>`);
+      });
+    }
+  });
+
+  el.innerHTML = `
+    <div class="gantt-wrap">
+      <div class="gantt">
+        <div class="gantt-labels">
+          <div class="gantt-label-hdr"></div>
+          ${labelRows.join('')}
+        </div>
+        <div class="gantt-timeline" id="timeline">
+          <div class="gantt-grid" style="width:${gridW}px">
+            <div class="g-months">
+              ${months.map(m => `<div class="g-month" style="width:${m.days * pxPerDay}px">${m.label}</div>`).join('')}
+            </div>
+            <div class="g-days" style="position:relative;height:14px;margin-bottom:4px"></div>
+            <div class="g-rows" style="position:relative">
+              ${lines}
+              ${barRows.join('')}
+              ${todayHTML}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="gantt-legend">
+        <div class="legend-item"><div class="legend-swatch done"></div>완료</div>
+        <div class="legend-item"><div class="legend-swatch progress"></div>진행중</div>
+        <div class="legend-item"><div class="legend-swatch todo"></div>예정</div>
+        <div class="legend-item"><div class="legend-swatch milestone"></div>마일스톤</div>
+        <div class="legend-item"><div class="legend-swatch hold"></div>보류/캔슬</div>
+      </div>
+    </div>`;
+
+  // 오늘로 스크롤
+  const tl = document.getElementById('timeline');
+  if (tOff > 0) tl.scrollLeft = Math.max(0, tOff * pxPerDay - tl.clientWidth / 2);
+
+  // 좌측 라벨 클릭 → 드롭다운 토글 (드래그가 아닐 때만)
+  el.querySelectorAll('.gantt-label[data-action="toggle"]').forEach(lbl => {
+    lbl.addEventListener('click', e => {
+      e.stopPropagation();
+      const idx = +lbl.dataset.taskIdx;
+      const t = list[idx];
+      if (!(t.phases || []).length) {
+        const realIdx = TASKS.indexOf(t);
+        if (editMode) openEditDetail(realIdx);
+        else openDetail(realIdx);
+        return;
+      }
+      if (expandedSet.has(t.name)) expandedSet.delete(t.name);
+      else expandedSet.add(t.name);
+      renderGantt();
+    });
+  });
+
+  // 막대 클릭 → editMode면 편집, 아니면 디테일 (resize 중에는 무시)
+  el.querySelectorAll('.g-row[data-action="detail"]').forEach(row => {
+    row.addEventListener('click', (e) => {
+      if (_resizingFlag) return;
+      if (e.target.closest('.g-bar-handle')) return;
+      const idx = +row.dataset.idx;
+      const realIdx = TASKS.indexOf(list[idx]);
+      if (editMode) openEditDetail(realIdx);
+      else openDetail(realIdx);
+    });
+  });
+
+  // 간트뷰 하단 "+ 태스크 추가" 슬롯 (편집 모드만 CSS로 표시)
+  const addSlot = document.createElement('div');
+  addSlot.className = 'gantt-add-slot';
+  addSlot.textContent = '+ 태스크 추가';
+  addSlot.addEventListener('click', () => openEditDetail(-1));
+  el.appendChild(addSlot);
+
+  // 편집 모드 → 막대 양 끝 resize 핸들러
+  bindBarResize(el, pxPerDay);
+
+  // 편집 모드 → 드래그앤드롭 활성화 (SortableJS)
+  bindGanttDnD(list);
+}
+
+let _resizingFlag = false; // 클릭 이벤트와 resize 충돌 방지
+
+function bindBarResize(rootEl, pxPerDay) {
+  if (!editMode) return;
+  const totalDays = diff(GANTT_RANGE.start, GANTT_RANGE.end) + 1;
+
+  rootEl.querySelectorAll('.g-bar-handle').forEach(handle => {
+    handle.addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      e.preventDefault();
+      handle.setPointerCapture?.(e.pointerId);
+
+      const bar = handle.closest('.g-bar');
+      const realIdx = +bar.dataset.resizeRealIdx;
+      const task = TASKS[realIdx];
+      if (!task) return;
+
+      const side = handle.dataset.side; // 'start' | 'end'
+      const startX = e.clientX;
+      const startLeft = parseFloat(bar.style.left);
+      const startWidth = parseFloat(bar.style.width);
+      _resizingFlag = true;
+      bar.classList.add('resizing');
+
+      // 툴팁
+      const tip = document.createElement('div');
+      tip.className = 'bar-tooltip';
+      bar.appendChild(tip);
+      const updateTip = (s, e) => { tip.textContent = `${fmtShort(s)} ~ ${fmtShort(e)}`; };
+      updateTip(task.start, task.end);
+
+      const onMove = (ev) => {
+        const dx = ev.clientX - startX;
+        let newLeft = startLeft;
+        let newWidth = startWidth;
+        if (side === 'start') {
+          newLeft = Math.max(0, startLeft + dx);
+          newWidth = Math.max(pxPerDay, startWidth - dx);
+        } else {
+          newWidth = Math.max(pxPerDay, startWidth + dx);
+        }
+        bar.style.left = newLeft + 'px';
+        bar.style.width = newWidth + 'px';
+
+        const sDays = Math.round(newLeft / pxPerDay);
+        const eDays = Math.round((newLeft + newWidth) / pxPerDay) - 1;
+        const newStart = addDaysToRangeStart(sDays);
+        const newEnd = addDaysToRangeStart(Math.max(eDays, sDays));
+        updateTip(newStart, newEnd);
+      };
+
+      const onUp = () => {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        bar.classList.remove('resizing');
+        tip.remove();
+
+        const finalLeft = parseFloat(bar.style.left);
+        const finalWidth = parseFloat(bar.style.width);
+        const sDays = Math.max(0, Math.round(finalLeft / pxPerDay));
+        const eDays = Math.min(totalDays - 1, Math.round((finalLeft + finalWidth) / pxPerDay) - 1);
+
+        const newStart = addDaysToRangeStart(sDays);
+        const newEnd = addDaysToRangeStart(Math.max(eDays, sDays));
+
+        if (newStart !== task.start || newEnd !== task.end) {
+          task.start = newStart;
+          task.end = newEnd;
+          saveData();
+          renderGantt();
+        }
+        // 클릭 핸들러는 잠시 무시
+        setTimeout(() => { _resizingFlag = false; }, 50);
+      };
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+    });
+  });
+}
+
+function addDaysToRangeStart(days) {
+  const d = toDate(GANTT_RANGE.start);
+  d.setDate(d.getDate() + days);
+  return fmt(d);
+}
+
+function bindGanttDnD(list) {
+  if (!editMode || typeof Sortable === 'undefined') return;
+  const labelsEl = document.querySelector('.gantt-labels');
+  if (!labelsEl) return;
+  if (labelsEl._sortable) { labelsEl._sortable.destroy(); labelsEl._sortable = null; }
+
+  labelsEl._sortable = Sortable.create(labelsEl, {
+    animation: 150,
+    draggable: '.gantt-label[data-task-idx]:not(.is-sub)',
+    filter: '.gantt-label-hdr, .gantt-label.is-sub',
+    ghostClass: 'drag-ghost',
+    chosenClass: 'drag-chosen',
+    dragClass: 'drag-drag',
+    delay: 80,
+    delayOnTouchOnly: true,
+    touchStartThreshold: 4,
+    onEnd: (evt) => {
+      // 드래그 후 새 순서를 DOM에서 읽어와 TASKS 재정렬
+      const newOrder = [...labelsEl.querySelectorAll('.gantt-label[data-task-idx]:not(.is-sub)')]
+        .map(el => +el.dataset.taskIdx);
+      if (newOrder.length !== list.length) { renderGantt(); return; }
+
+      // newOrder는 원래 list 인덱스의 새 순서. list[newOrder[k]] 가 새 k번째.
+      const reordered = newOrder.map(i => list[i]);
+
+      // 현재 활성 product의 항목만 재정렬, 나머지는 그대로
+      if (activeProductId === 'all') {
+        TASKS.length = 0;
+        reordered.forEach(t => TASKS.push(t));
+      } else {
+        const queue = [...reordered];
+        const newAll = TASKS.map(t => {
+          if (t.product === activeProductId) return queue.shift();
+          return t;
+        });
+        TASKS.length = 0;
+        newAll.forEach(t => TASKS.push(t));
+      }
+
+      saveData();
+      renderDevNow(); // 전체 재렌더 (탭 카운트 등도 갱신)
+    },
+  });
+}
+
+// ── CARDS ──
+
+function renderCards() {
+  const el = document.getElementById('cardView');
+  const list = filteredTasks();
+
+  const cards = list.map(t => {
+    const i = TASKS.indexOf(t);
+    const deadlineStr = t.deadline ? fmtShort(t.deadline) : '';
+    const overdue = isOverdue(t.deadline) ? ' overdue' : '';
+    const statusLabel = isInactive(t)
+      ? (t.lifecycle === 'cancelled' ? '캔슬' : '보류')
+      : t.dev === 'done' ? 'done' : t.dev === 'progress' ? 'in progress' : 'to do';
+    const badgeCls = isInactive(t) ? 'todo' : t.dev;
+    const hasThumb = t.images && t.images.length > 0;
+    const assigneeStr = t.assignees && t.assignees.length ? t.assignees.join(' · ') : '';
+    const prod = productById(t.product);
+    const prodTag = prod ? `<span class="poc-tag" style="margin-right:6px">${prod.name}</span>` : '';
+    return `
+      <div class="task-card" data-idx="${i}" style="${isInactive(t)?'opacity:.55':''}">
+        ${hasThumb ? `<img class="tc-thumb" src="${t.images[0]}" alt="">` : ''}
+        <div class="tc-body">
+          <div class="tc-top">
+            <div class="tc-name">${t.name}</div>
+            <div class="tc-badge ${badgeCls}">${statusLabel}</div>
+          </div>
+          <div class="tc-note">${t.note}</div>
+          ${assigneeStr ? `<div class="tc-assignees">${prodTag}${assigneeStr}</div>` : `<div class="tc-assignees">${prodTag}</div>`}
+          ${deadlineStr ? `<div class="tc-deadline${overdue}">→ ${deadlineStr}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `<div class="card-list">${cards}<div class="add-task-slot" onclick="openEditDetail(-1)">+ 태스크 추가</div></div>`;
+
+  // click handlers
+  el.querySelectorAll('.task-card').forEach(card => {
+    card.addEventListener('click', () => {
+      if (editMode) openEditDetail(+card.dataset.idx);
+      else openDetail(+card.dataset.idx);
+    });
+  });
+}
+
+function staggerTaskCards() {
+  document.querySelectorAll('#cardView .task-card').forEach((c, i) => {
+    setTimeout(() => c.classList.add('visible'), i * 40);
+  });
+}
+
+// ── VIEW TOGGLE ──
+
+function bindViewToggle() {
+  document.querySelectorAll('.vt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentView = btn.dataset.view;
+      document.querySelectorAll('.vt').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      document.getElementById('ganttView').classList.toggle('active', currentView === 'gantt');
+      document.getElementById('cardView').classList.toggle('active', currentView === 'card');
+
+      if (currentView === 'card') staggerTaskCards();
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  DETAIL OVERLAY
+// ═══════════════════════════════════════════════════
+
+function openDetail(idx) {
+  const t = TASKS[idx];
+  const backdrop = document.getElementById('detailBackdrop');
+  const overlay = document.getElementById('detailOverlay');
+
+  const deadlineStr = t.deadline ? t.deadline.replace(/-/g, '/') : '미정';
+  const overdue = isOverdue(t.deadline) ? ' overdue' : '';
+
+  const statusLabel = s => {
+    if (s === 'done') return 'done';
+    if (s === 'progress') return 'in progress';
+    return 'to do';
+  };
+
+  overlay.innerHTML = `
+    <div class="detail-handle"></div>
+    <div class="detail-name">${t.name}</div>
+
+    <div class="detail-section">
+      <div class="detail-label">STATUS</div>
+      <div class="detail-row">
+        <div class="detail-key">PJT</div>
+        <div class="detail-val ${t.pjt}">${statusLabel(t.pjt)}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-key">DEV</div>
+        <div class="detail-val ${t.dev}">${statusLabel(t.dev)}</div>
+      </div>
+    </div>
+
+    ${t.assignees && t.assignees.length ? `
+    <div class="detail-section">
+      <div class="detail-label">ASSIGNEES</div>
+      <div class="detail-note">${t.assignees.join(' · ')}</div>
+    </div>` : ''}
+
+    <div class="detail-section">
+      <div class="detail-label">UPDATE (${LAST_UPDATED.slice(5).replace('-','.')})</div>
+      <div class="detail-note">${t.note}</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-label">DEADLINE</div>
+      <div class="detail-deadline${overdue}">${deadlineStr}</div>
+    </div>
+
+    <div class="detail-actions">
+      <button class="ef-btn save" id="detailDone">${t.dev === 'done' ? 'DEV done 해제' : 'DEV done 처리'}</button>
+      <button class="ef-btn delete" id="detailEdit">편집</button>
+      <button class="ef-btn delete" id="detailDelete">삭제</button>
+    </div>
+  `;
+
+  overlay.querySelector('#detailDone').addEventListener('click', () => {
+    if (t.dev === 'done') {
+      t.dev = 'progress';
+      toast('진행중으로 변경');
+    } else {
+      t.dev = 'done';
+      toast('done 처리됨');
+    }
+    saveData();
+    rerender();
+    closeOverlay();
+  });
+
+  overlay.querySelector('#detailEdit').addEventListener('click', () => {
+    closeOverlay();
+    setTimeout(() => openEditDetail(idx), 250);
+  });
+
+  overlay.querySelector('#detailDelete').addEventListener('click', () => {
+    if (!confirm(`"${t.name}" 삭제할까요?`)) return;
+    TASKS.splice(idx, 1);
+    saveData();
+    rerender();
+    closeOverlay();
+    toast('삭제됨');
+  });
+
+  backdrop.classList.add('open');
+  overlay.classList.add('open');
+  backdrop.addEventListener('click', closeOverlay);
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER: POC
+// ═══════════════════════════════════════════════════
+
+function renderPOC() {
+  const el = document.getElementById('poc');
+
+  // 정렬: updated 우선 → 같으면 created → 같으면 인덱스(push 순서)
+  // 사용자 데이터에 updated가 같은 날짜로 묶이는 경우가 많아 created를 secondary key로 사용
+  const cmpStr = (a, b, newest) => newest ? (b > a ? 1 : -1) : (a > b ? 1 : -1);
+  const cmpIdx = (ai, bi, newest) => newest ? bi - ai : ai - bi;
+  const sortKey = p => p.updated || p.created || '';
+  const secKey = p => p.created || '';
+  const newest = pocSort === 'newest';
+  const sorted = POCS.map((p, i) => ({ p, i }))
+    .sort((a, b) => {
+      const ad = sortKey(a.p), bd = sortKey(b.p);
+      if (ad !== bd) return cmpStr(ad, bd, newest);
+      const ac = secKey(a.p), bc = secKey(b.p);
+      if (ac !== bc) return cmpStr(ac, bc, newest);
+      return cmpIdx(a.i, b.i, newest);
+    });
+
+  el.innerHTML = `
+    <div class="poc-wrap">
+      <div class="poc-hdr-row">
+        <div class="poc-section-label">Proof of Concept</div>
+        <div class="poc-sort" role="group" aria-label="정렬">
+          <button data-sort="newest" class="${pocSort==='newest'?'active':''}">최신순</button>
+          <button data-sort="oldest" class="${pocSort==='oldest'?'active':''}">오래된순</button>
+        </div>
+      </div>
+      <div class="poc-grid">
+        ${sorted.map(({ p, i }) => {
+          const hasThumb = p.images && p.images.length > 0;
+          const assigneeStr = p.assignees && p.assignees.length ? p.assignees.join(' · ') : '';
+          const upd = (p.updated || p.created || '').replace(/-/g, '.');
+          return `
+          <div class="poc-card" data-poc="${i}">
+            ${hasThumb ? `<img class="poc-thumb" src="${p.images[0]}" alt="">` : ''}
+            <div class="poc-hdr">
+              <div class="poc-name">${p.name}</div>
+              <div class="poc-tag">${p.tag}</div>
+            </div>
+            <div class="poc-desc">${p.desc}</div>
+            ${assigneeStr ? `<div class="poc-meta">${assigneeStr}</div>` : ''}
+            ${upd ? `<div class="poc-meta">최근 편집 ${upd}</div>` : ''}
+            ${p.link ? `<a class="poc-link" href="${p.link}" target="_blank" rel="noopener">→ 바로가기</a>` : ''}
+          </div>`;
+        }).join('')}
+        <div class="poc-card add-slot" onclick="openEditPOC(-1)">+ POC 추가</div>
+      </div>
+    </div>`;
+
+  // 정렬 토글
+  el.querySelectorAll('.poc-sort button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      pocSort = btn.dataset.sort;
+      renderPOC();
+      setTimeout(staggerPocCards, 30);
+    });
+  });
+
+  // 카드 클릭 → 편집
+  el.querySelectorAll('.poc-card[data-poc]').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (editMode && !e.target.closest('.poc-link')) {
+        e.preventDefault();
+        openEditPOC(+card.dataset.poc);
+      }
+    });
+  });
+}
+
+function staggerPocCards() {
+  document.querySelectorAll('#poc .poc-card').forEach((c, i) => {
+    setTimeout(() => c.classList.add('visible'), i * 80);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  TAB NAV
+// ═══════════════════════════════════════════════════
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const t = tab.dataset.tab;
+    if (t === 'daily') { window.open('https://k-ent-pulse.vercel.app', '_blank'); return; }
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(t).classList.add('active');
+    if (t === 'poc') staggerPocCards();
+    if (t === 'devnow' && currentView === 'card') staggerTaskCards();
+  });
+});
+
+// ═══════════════════════════════════════════════════
+//  EDIT MODE
+// ═══════════════════════════════════════════════════
+
+let editMode = false;
+let pocSort = 'newest'; // 'newest' | 'oldest'
+const STORAGE_KEY = 'devnow-data-v3';
+
+function toggleEditMode() {
+  editMode = !editMode;
+  document.querySelector('.app').classList.toggle('edit-mode', editMode);
+  document.getElementById('editFab').classList.toggle('active', editMode);
+  document.getElementById('editFab').textContent = editMode ? 'DONE' : 'EDIT';
+  // 간트 드래그앤드롭 재바인딩을 위해 재렌더
+  if (currentView === 'gantt') renderGantt();
+}
+
+function toast(msg) {
+  const el = document.getElementById('efToast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+function saveData() {
+  LAST_UPDATED = fmt(new Date());
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ tasks: TASKS, pocs: POCS, lastUpdated: LAST_UPDATED }));
+  document.getElementById('footerUpdated').textContent = 'UPDATED ' + LAST_UPDATED + ' · ';
+}
+
+function loadData() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return;
+  try {
+    const data = JSON.parse(saved);
+    if (data.tasks) { TASKS.length = 0; data.tasks.forEach(t => TASKS.push(t)); }
+    if (data.pocs) { POCS.length = 0; data.pocs.forEach(p => POCS.push(p)); }
+    if (data.lastUpdated) LAST_UPDATED = data.lastUpdated;
+  } catch(e) {}
+  // POC에 created/updated가 없으면 인덱스 기반으로 채움(메모리만)
+  // 배열의 마지막(나중에 추가)이 가장 최근으로 가정 — 사용자 push 순서 보존
+  migratePOCsInMemory();
+}
+
+function migratePOCsInMemory() {
+  const today = new Date();
+  POCS.forEach((p, i) => {
+    if (!p.created || !p.updated) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - (POCS.length - 1 - i));
+      const dateStr = fmt(d);
+      if (!p.created) p.created = dateStr;
+      if (!p.updated) p.updated = dateStr;
+    }
+  });
+}
+
+function rerender() {
+  renderDevNow();
+  renderPOC();
+  if (currentView === 'card') setTimeout(staggerTaskCards, 50);
+  setTimeout(staggerPocCards, 50);
+}
+
+// ── Task Edit Overlay ──
+
+function openEditDetail(idx) {
+  const isNew = idx === -1;
+  const t = isNew ? { name:'', pjt:'todo', dev:'todo', note:'', deadline:'', start:fmt(new Date()), assignees:[], images:[] } : TASKS[idx];
+  if (!t.assignees) t.assignees = [];
+  if (!t.images) t.images = [];
+  let editImages = [...t.images];
+  const backdrop = document.getElementById('detailBackdrop');
+  const overlay = document.getElementById('detailOverlay');
+
+  const statusBtns = (field, val) => ['todo','progress','done'].map(s =>
+    `<button class="ef-sbtn${s===val?' active':''}" data-field="${field}" data-val="${s}">${s==='todo'?'to do':s==='progress'?'in progress':'done'}</button>`
+  ).join('');
+
+  const memberBtns = MEMBERS.map(m =>
+    `<button class="ef-member${t.assignees.includes(m)?' active':''}" data-name="${m}">${m}</button>`
+  ).join('');
+
+  function renderImgGrid() {
+    const grid = overlay.querySelector('#efImages');
+    grid.innerHTML = editImages.map((img, i) => `
+      <div class="ef-img-item">
+        <img src="${img}">
+        ${i === 0 ? '<span class="ef-img-badge">대표</span>' : ''}
+        <button class="ef-img-del" data-img="${i}">&times;</button>
+      </div>`).join('') + (editImages.length < 5 ? '<div class="ef-img-add" id="efImgAdd">+</div>' : '');
+
+    grid.querySelectorAll('.ef-img-del').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); editImages.splice(+btn.dataset.img, 1); renderImgGrid(); });
+    });
+    const addBtn = grid.querySelector('#efImgAdd');
+    if (addBtn) addBtn.addEventListener('click', () => overlay.querySelector('#efImgInput').click());
+  }
+
+  overlay.innerHTML = `
+    <div class="detail-handle"></div>
+    <div class="ef-group">
+      <label class="ef-label">NAME</label>
+      <input class="ef-input" id="efName" value="${t.name.replace(/"/g,'&quot;')}">
+    </div>
+    <div class="ef-group">
+      <label class="ef-label">STATUS</label>
+      <div class="ef-row"><span class="ef-key">PJT</span><div class="ef-status-btns" id="efPjt">${statusBtns('pjt',t.pjt)}</div></div>
+      <div class="ef-row"><span class="ef-key">DEV</span><div class="ef-status-btns" id="efDev">${statusBtns('dev',t.dev)}</div></div>
+    </div>
+    <div class="ef-group">
+      <label class="ef-label">ASSIGNEES</label>
+      <div class="ef-members" id="efMembers">${memberBtns}</div>
+    </div>
+    <div class="ef-group">
+      <label class="ef-label">NOTE</label>
+      <textarea class="ef-textarea" id="efNote">${t.note}</textarea>
+    </div>
+    <div class="ef-group ef-dates">
+      <div><label class="ef-label">START</label><input type="date" class="ef-date" id="efStart" value="${t.start}"></div>
+      <div><label class="ef-label">DEADLINE</label><input type="date" class="ef-date" id="efDeadline" value="${t.deadline}"></div>
+    </div>
+    <div class="ef-group">
+      <label class="ef-label">IMAGES (MAX 5)</label>
+      <div class="ef-img-grid" id="efImages"></div>
+      <input type="file" accept="image/*" id="efImgInput" style="display:none" multiple>
+    </div>
+    <div class="ef-actions">
+      ${isNew ? '' : '<button class="ef-btn delete" id="efDelete">삭제</button>'}
+      <button class="ef-btn save" id="efSave">${isNew ? '추가' : '저장'}</button>
+    </div>`;
+
+  renderImgGrid();
+
+  // status toggle
+  overlay.querySelectorAll('.ef-sbtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.parentElement.querySelectorAll('.ef-sbtn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // member toggle
+  overlay.querySelectorAll('.ef-member').forEach(btn => {
+    btn.addEventListener('click', () => btn.classList.toggle('active'));
+  });
+
+  // image upload
+  overlay.querySelector('#efImgInput').addEventListener('change', async e => {
+    const files = [...e.target.files].slice(0, 5 - editImages.length);
+    for (const f of files) { editImages.push(await resizeImg(f)); }
+    renderImgGrid();
+    e.target.value = '';
+  });
+
+  // save
+  overlay.querySelector('#efSave').addEventListener('click', () => {
+    const updated = {
+      name: overlay.querySelector('#efName').value.trim(),
+      pjt: overlay.querySelector('#efPjt .ef-sbtn.active').dataset.val,
+      dev: overlay.querySelector('#efDev .ef-sbtn.active').dataset.val,
+      note: overlay.querySelector('#efNote').value,
+      deadline: overlay.querySelector('#efDeadline').value,
+      start: overlay.querySelector('#efStart').value,
+      assignees: [...overlay.querySelectorAll('#efMembers .ef-member.active')].map(b => b.dataset.name),
+      images: editImages,
+    };
+    if (!updated.name) return;
+    if (isNew) TASKS.push(updated);
+    else Object.assign(TASKS[idx], updated);
+    saveData(); rerender(); closeOverlay();
+    toast(isNew ? '태스크 추가됨' : '저장 완료');
+  });
+
+  // delete
+  if (!isNew) {
+    overlay.querySelector('#efDelete').addEventListener('click', () => {
+      if (!confirm(t.name + ' 삭제할까요?')) return;
+      TASKS.splice(idx, 1);
+      saveData(); rerender(); closeOverlay();
+      toast('삭제됨');
+    });
+  }
+
+  backdrop.classList.add('open');
+  overlay.classList.add('open');
+  backdrop.addEventListener('click', closeOverlay);
+}
+
+// ── POC Edit Overlay ──
+
+function openEditPOC(idx) {
+  const isNew = idx === -1;
+  const p = isNew ? { name:'', desc:'', tag:'POC', link:'', assignees:[], images:[] } : POCS[idx];
+  if (!p.assignees) p.assignees = [];
+  if (!p.images) p.images = [];
+  let editImages = [...p.images];
+  const backdrop = document.getElementById('detailBackdrop');
+  const overlay = document.getElementById('detailOverlay');
+
+  const tagBtns = ['PRODUCT','POC'].map(t =>
+    `<button class="ef-sbtn${t===p.tag?' active':''}" data-val="${t}">${t}</button>`
+  ).join('');
+
+  const memberBtns = MEMBERS.map(m =>
+    `<button class="ef-member${p.assignees.includes(m)?' active':''}" data-name="${m}">${m}</button>`
+  ).join('');
+
+  function renderImgGrid() {
+    const grid = overlay.querySelector('#efPocImages');
+    grid.innerHTML = editImages.map((img, i) => `
+      <div class="ef-img-item">
+        <img src="${img}">
+        ${i === 0 ? '<span class="ef-img-badge">대표</span>' : ''}
+        <button class="ef-img-del" data-img="${i}">&times;</button>
+      </div>`).join('') + (editImages.length < 5 ? '<div class="ef-img-add" id="efPocImgAdd">+</div>' : '');
+
+    grid.querySelectorAll('.ef-img-del').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); editImages.splice(+btn.dataset.img, 1); renderImgGrid(); });
+    });
+    const addBtn = grid.querySelector('#efPocImgAdd');
+    if (addBtn) addBtn.addEventListener('click', () => overlay.querySelector('#efPocImgInput').click());
+  }
+
+  overlay.innerHTML = `
+    <div class="detail-handle"></div>
+    <div class="ef-group">
+      <label class="ef-label">NAME</label>
+      <input class="ef-input" id="efPocName" value="${p.name.replace(/"/g,'&quot;')}">
+    </div>
+    <div class="ef-group">
+      <label class="ef-label">DESCRIPTION</label>
+      <input class="ef-input" id="efPocDesc" value="${p.desc.replace(/"/g,'&quot;')}">
+    </div>
+    <div class="ef-group">
+      <label class="ef-label">TAG</label>
+      <div class="ef-status-btns" id="efPocTag">${tagBtns}</div>
+    </div>
+    <div class="ef-group">
+      <label class="ef-label">ASSIGNEES</label>
+      <div class="ef-members" id="efPocMembers">${memberBtns}</div>
+    </div>
+    <div class="ef-group">
+      <label class="ef-label">LINK</label>
+      <input class="ef-input" id="efPocLink" value="${p.link}" placeholder="https://...">
+    </div>
+    <div class="ef-group">
+      <label class="ef-label">IMAGES (MAX 5)</label>
+      <div class="ef-img-grid" id="efPocImages"></div>
+      <input type="file" accept="image/*" id="efPocImgInput" style="display:none" multiple>
+    </div>
+    <div class="ef-actions">
+      ${isNew ? '' : '<button class="ef-btn delete" id="efPocDelete">삭제</button>'}
+      <button class="ef-btn save" id="efPocSave">${isNew ? '추가' : '저장'}</button>
+    </div>`;
+
+  renderImgGrid();
+
+  overlay.querySelectorAll('#efPocTag .ef-sbtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      overlay.querySelectorAll('#efPocTag .ef-sbtn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  overlay.querySelectorAll('.ef-member').forEach(btn => {
+    btn.addEventListener('click', () => btn.classList.toggle('active'));
+  });
+
+  overlay.querySelector('#efPocImgInput').addEventListener('change', async e => {
+    const files = [...e.target.files].slice(0, 5 - editImages.length);
+    for (const f of files) { editImages.push(await resizeImg(f)); }
+    renderImgGrid();
+    e.target.value = '';
+  });
+
+  overlay.querySelector('#efPocSave').addEventListener('click', () => {
+    const today = fmt(new Date());
+    const patch = {
+      name: overlay.querySelector('#efPocName').value.trim(),
+      desc: overlay.querySelector('#efPocDesc').value.trim(),
+      tag: overlay.querySelector('#efPocTag .ef-sbtn.active').dataset.val,
+      link: overlay.querySelector('#efPocLink').value.trim(),
+      assignees: [...overlay.querySelectorAll('#efPocMembers .ef-member.active')].map(b => b.dataset.name),
+      images: editImages,
+      updated: today,
+    };
+    if (!patch.name) return;
+    if (isNew) {
+      patch.created = today;
+      POCS.push(patch);
+    } else {
+      Object.assign(POCS[idx], patch);
+    }
+    saveData(); rerender(); closeOverlay();
+    toast(isNew ? 'POC 추가됨' : '저장 완료');
+  });
+
+  if (!isNew) {
+    overlay.querySelector('#efPocDelete').addEventListener('click', () => {
+      if (!confirm(p.name + ' 삭제할까요?')) return;
+      POCS.splice(idx, 1);
+      saveData(); rerender(); closeOverlay();
+      toast('삭제됨');
+    });
+  }
+
+  backdrop.classList.add('open');
+  overlay.classList.add('open');
+  backdrop.addEventListener('click', closeOverlay);
+}
+
+function closeOverlay() {
+  const backdrop = document.getElementById('detailBackdrop');
+  const overlay = document.getElementById('detailOverlay');
+  backdrop.classList.remove('open');
+  overlay.classList.remove('open');
+  backdrop.removeEventListener('click', closeOverlay);
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+
+loadData();
+renderDevNow();
+renderPOC();
+setTimeout(staggerTaskCards, 100);
+document.getElementById('footerUpdated').textContent = 'UPDATED ' + LAST_UPDATED + ' · ';
+
+// ═══════════════════════════════════════════════════
+//  BACKUP / RESTORE
+// ═══════════════════════════════════════════════════
+function exportBackup() {
+  const data = {
+    tasks: TASKS,
+    pocs: POCS,
+    lastUpdated: LAST_UPDATED,
+    exportedAt: fmt(new Date()),
+    version: 3,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `devnow-backup-${fmt(new Date())}.json`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  toast('백업 파일 다운로드됨');
+}
+
+async function importBackup(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!confirm('현재 데이터를 백업 파일로 덮어쓸까요?\n걱정되시면 먼저 "백업 내보내기"로 현재 상태를 저장해두세요.\n이 작업은 되돌릴 수 없어요.')) {
+    e.target.value = '';
+    return;
+  }
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!Array.isArray(data.tasks) && !Array.isArray(data.pocs)) {
+      throw new Error('올바른 형식의 백업 파일이 아닙니다');
+    }
+    if (Array.isArray(data.tasks)) { TASKS.length = 0; data.tasks.forEach(t => TASKS.push(t)); }
+    if (Array.isArray(data.pocs)) { POCS.length = 0; data.pocs.forEach(p => POCS.push(p)); }
+    if (data.lastUpdated) LAST_UPDATED = data.lastUpdated;
+    // saveData()는 LAST_UPDATED를 오늘로 바꿔서, 가져오기에는 직접 저장
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ tasks: TASKS, pocs: POCS, lastUpdated: LAST_UPDATED }));
+    document.getElementById('footerUpdated').textContent = 'UPDATED ' + LAST_UPDATED + ' · ';
+    rerender();
+    toast('가져오기 완료');
+  } catch (err) {
+    alert('가져오기 실패: ' + err.message);
+  }
+  e.target.value = '';
+}
+
+document.getElementById('exportBackupBtn').addEventListener('click', exportBackup);
+document.getElementById('importBackupBtn').addEventListener('click', () => {
+  document.getElementById('importBackupInput').click();
+});
+document.getElementById('importBackupInput').addEventListener('change', importBackup);
+</script>
+</body>
+</html>
